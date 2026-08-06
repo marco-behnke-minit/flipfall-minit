@@ -1,0 +1,66 @@
+[gd_scene format=3 uid="uid://nsmj17j1racb"]
+
+[ext_resource type="Script" uid="uid://bu83roj2tdoqa" path="res://src/game.gd" id="1_game"]
+[ext_resource type="Script" uid="uid://c4txxnyx8v1jo" path="res://src/background.gd" id="2_bg"]
+[ext_resource type="Script" uid="uid://cbaxpw84qx271" path="res://src/level_label.gd" id="3_label"]
+[ext_resource type="Script" uid="uid://172o6mby22oa" path="res://src/pit.gd" id="4_pit"]
+[ext_resource type="Script" uid="uid://yffrm4jucypp" path="res://src/room_view.gd" id="5_room"]
+[ext_resource type="Script" uid="uid://cqbf1okxa5fjq" path="res://src/particles.gd" id="6_particles"]
+[ext_resource type="Script" uid="uid://b81s3ylbs0ie1" path="res://src/hud.gd" id="7_hud"]
+[ext_resource type="Script" uid="uid://clfjoh56io2gv" path="res://src/ui/header_bar.gd" id="8_header"]
+[ext_resource type="Script" uid="uid://bdddsfh14h7n4" path="res://src/ui/rewards.gd" id="9_rewards"]
+[ext_resource type="Script" uid="uid://bojbm8n11m68q" path="res://src/ui/feedback.gd" id="10_feedback"]
+[ext_resource type="Script" uid="uid://b0stkeggy4io4" path="res://src/audio.gd" id="11_audio"]
+
+[node name="Main" type="Node2D" unique_id=2050899325]
+script = ExtResource("1_game")
+
+[node name="Background" type="Node2D" parent="." unique_id=1277105069]
+script = ExtResource("2_bg")
+
+[node name="Surface" type="Node2D" parent="." unique_id=1445085039]
+
+[node name="Shake" type="Node2D" parent="Surface" unique_id=1602177824]
+
+[node name="LevelLabel" type="Node2D" parent="Surface/Shake" unique_id=1076901990]
+script = ExtResource("3_label")
+
+[node name="Playfield" type="SubViewportContainer" parent="Surface/Shake" unique_id=209534208]
+offset_left = 78.0
+offset_top = 203.0
+offset_right = 882.0
+offset_bottom = 1007.0
+mouse_filter = 2
+
+[node name="SubViewport" type="SubViewport" parent="Surface/Shake/Playfield" unique_id=2141497962]
+transparent_bg = true
+handle_input_locally = false
+gui_disable_input = true
+size = Vector2i(804, 804)
+render_target_update_mode = 4
+
+[node name="Dpi" type="Node2D" parent="Surface/Shake/Playfield/SubViewport" unique_id=1625440455]
+
+[node name="Pit" type="Node2D" parent="Surface/Shake/Playfield/SubViewport/Dpi" unique_id=215769158]
+script = ExtResource("4_pit")
+
+[node name="Room" type="Node2D" parent="Surface/Shake/Playfield/SubViewport/Dpi" unique_id=1675839563]
+script = ExtResource("5_room")
+
+[node name="Particles" type="Node2D" parent="Surface/Shake" unique_id=1886611072]
+script = ExtResource("6_particles")
+
+[node name="Hud" type="Node2D" parent="Surface" unique_id=1719353152]
+script = ExtResource("7_hud")
+
+[node name="Header" type="Node2D" parent="Surface" unique_id=1425839401]
+script = ExtResource("8_header")
+
+[node name="Rewards" type="Node2D" parent="Surface" unique_id=567467246]
+script = ExtResource("9_rewards")
+
+[node name="Feedback" type="Node2D" parent="Surface" unique_id=910305949]
+script = ExtResource("10_feedback")
+
+[node name="Audio" type="Node" parent="." unique_id=1392429151]
+script = ExtResource("11_audio")

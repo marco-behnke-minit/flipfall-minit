@@ -1,0 +1,16 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Web export output and upload ZIP (tools/package.sh)
+/build/
+
+# Visual-verification artifacts (tools/shots.gd, gallery.gd, fade_check.gd
+# write to user://, but ProofShot writes into the project)
+/proofshot-artifacts/
+
+# Local scratch: the vendored SDK docs / minit.gd copy
+tmp/
+
+# macOS
+.DS_Store

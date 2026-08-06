@@ -1,0 +1,67 @@
+// Prove the GDScript physics port still reproduces the original JavaScript
+// simulation — the one tools/solve.js in the HTML5 project ran to prove every
+// room solvable.
+//
+//   node tools/compare-trace.mjs
+//
+// Both engines run the same scripted rotation schedule through all forty rooms.
+// Discrete outcomes (status, cause, buttons pressed, rotations, impact count)
+// must match exactly; positions and velocities are allowed a small tolerance,
+// because V8 and the platform libm round exp() differently in the last place and
+// nothing can close that gap short of reimplementing exp.
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const project = resolve(here, '..');
+const GODOT = process.env.GODOT ?? '/Applications/Godot.app/Contents/MacOS/Godot';
+
+// One hundredth of a pixel, against a 60 px cell and a 22 px orb.
+const TOLERANCE = 0.01;
+
+const FIELDS = ['idx', 'name', 'status', 'cause', 'x', 'y', 'vx', 'vy', 'time',
+  'rotations', 'buttons', 'impacts', 'impactSum'];
+const DISCRETE = new Set(['idx', 'name', 'status', 'cause', 'rotations', 'buttons', 'impacts']);
+
+const run = (cmd, args) =>
+  execFileSync(cmd, args, { cwd: project, encoding: 'utf8', maxBuffer: 1 << 24 })
+    .split('\n')
+    .filter((l) => /^\d\d /.test(l))
+    .map((l) => Object.fromEntries(l.trim().split(/\s+/).map((v, i) => [FIELDS[i], v])));
+
+const js = run(process.execPath, ['tools/trace_js.mjs']);
+const gd = run(GODOT, ['--headless', '--script', 'res://tools/trace.gd']);
+
+if (js.length !== 40 || gd.length !== 40) {
+  console.error(`expected 40 rooms from each engine, got js=${js.length} gd=${gd.length}`);
+  process.exit(1);
+}
+
+const failures = [];
+const worst = {};
+
+for (let i = 0; i < js.length; i++) {
+  for (const field of FIELDS) {
+    const a = js[i][field];
+    const b = gd[i][field];
+    if (DISCRETE.has(field)) {
+      if (a !== b) failures.push(`${js[i].name}: ${field} js=${a} gd=${b}`);
+    } else {
+      const d = Math.abs(Number(a) - Number(b));
+      worst[field] = Math.max(worst[field] ?? 0, d);
+      if (d > TOLERANCE) failures.push(`${js[i].name}: ${field} drifted ${d.toFixed(6)}`);
+    }
+  }
+}
+
+console.log(`compared ${js.length} rooms`);
+console.log('max drift:', Object.fromEntries(
+  Object.entries(worst).map(([k, v]) => [k, v.toExponential(2)])));
+
+if (failures.length) {
+  console.error(`\n${failures.length} mismatch(es):`);
+  for (const f of failures.slice(0, 20)) console.error('  ' + f);
+  process.exit(1);
+}
+console.log('\nPASS — the port reproduces the simulation the rooms were verified against.');
