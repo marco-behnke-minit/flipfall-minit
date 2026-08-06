@@ -1,0 +1,206 @@
+// Rank all forty rooms by how hard they actually are, and compare that with the
+// tier each one is filed under.
+//
+//   node tools/difficulty.mjs            the table
+//   node tools/difficulty.mjs --csv      same, as CSV
+//
+// `par` orders the tiers today, but par only measures route LENGTH. It says
+// nothing about whether a route needs a timing window a human has to hit, or
+// about how much of the room kills you for missing it. Those are independent
+// axes, and a tier list sorted on one of them can flatten while looking fine.
+//
+// Reads .levelcache.json, which `npm run solve` fills in the sibling HTML5
+// project — so run the solver there first if the cache is cold.
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { LEVELS } from '../../flipfall/src/levels.js';
+import { GRID, TIERS, TIER_SIZE, tierOf } from '../../flipfall/src/constants.js';
+
+const cachePath = new URL('../../flipfall/.levelcache.json', import.meta.url);
+const cache = JSON.parse(readFileSync(cachePath, 'utf8'));
+const roomHash = (level) =>
+  createHash('sha256').update(level.map.join('|')).digest('hex').slice(0, 16);
+
+// A window this wide or wider is not really a timing test any more.
+const GENEROUS_MS = 300;
+
+// --- per-room measurement ---------------------------------------------------
+
+function measure(level, index) {
+  const solved = cache.rooms[roomHash(level)];
+  if (!solved) throw new Error(`no cached solution for "${level.name}" — run npm run solve`);
+
+  const restOnly = solved.rest.ok;
+  const forgivingMs =
+    solved.fast.ok && solved.fast.best.slack !== null ? solved.fast.best.slack * 1000 : null;
+
+  // Length: rotations on the route a player would actually take.
+  const rotations = restOnly ? solved.rest.rotations : solved.fast.ok ? solved.fast.best.rotations : 0;
+  const seconds = restOnly ? solved.rest.seconds : solved.fast.ok ? solved.fast.best.time : 0;
+
+  // Lethality: what the room does when you get it wrong. Spikes are fatal from
+  // any side; a gap in the border means the orb can leave the room entirely.
+  const flat = level.map.join('');
+  const spikes = (flat.match(/\^/g) ?? []).length;
+  let openEdges = 0;
+  for (let i = 0; i < GRID; i++) {
+    if (level.map[0][i] !== '#') openEdges++;
+    if (level.map[GRID - 1][i] !== '#') openEdges++;
+    if (level.map[i][0] !== '#') openEdges++;
+    if (level.map[i][GRID - 1] !== '#') openEdges++;
+  }
+  const doors = (flat.match(/[abc]/g) ?? []).length;
+  const buttons = (flat.match(/[123]/g) ?? []).length;
+
+  return {
+    n: index + 1,
+    name: level.name,
+    tier: tierOf(index),
+    par: level.par,
+    rotations,
+    seconds,
+    restOnly,
+    forgivingMs,
+    spikes,
+    openEdges,
+    buttons,
+    doors,
+  };
+}
+
+// --- the three axes ---------------------------------------------------------
+
+const norm = (v, lo, hi) => Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+
+/** Planning: how long the route is, and how much of it you hold in your head. */
+const planScore = (m) => norm(m.rotations, 1, 12);
+
+/**
+ * Execution: whether the room can be solved from rest at all, and if not, how
+ * tight the most forgiving window is. Needing *any* timing is a step change, so
+ * it carries a floor — a room with a luxurious 300 ms window is still asking
+ * something a rest-only room never asks.
+ */
+function execScore(m) {
+  if (m.restOnly) return 0;
+  if (m.forgivingMs === null) return 0.35;
+  return 0.35 + 0.65 * (1 - norm(m.forgivingMs, 0, GENEROUS_MS));
+}
+
+/** Risk: what a mistake costs. */
+const riskScore = (m) => norm(m.spikes / 10 + m.openEdges / 6, 0, 3);
+
+const WEIGHTS = { plan: 0.4, exec: 0.4, risk: 0.2 };
+const difficulty = (m) =>
+  100 * (WEIGHTS.plan * planScore(m) + WEIGHTS.exec * execScore(m) + WEIGHTS.risk * riskScore(m));
+
+// --- report -----------------------------------------------------------------
+
+const rooms = LEVELS.map(measure);
+for (const m of rooms) m.score = difficulty(m);
+
+const ranked = [...rooms].sort((a, b) => a.score - b.score);
+ranked.forEach((m, i) => {
+  m.rank = i + 1;
+  m.shouldBe = TIERS[Math.floor(i / TIER_SIZE)];
+});
+
+if (process.argv.includes('--csv')) {
+  console.log('n,name,tier,par,rotations,seconds,restOnly,forgivingMs,spikes,openEdges,score,rank,shouldBe');
+  for (const m of rooms) {
+    console.log([m.n, m.name, m.tier, m.par, m.rotations, m.seconds.toFixed(1), m.restOnly,
+      m.forgivingMs ?? '', m.spikes, m.openEdges, m.score.toFixed(1), m.rank, m.shouldBe].join(','));
+  }
+  process.exit(0);
+}
+
+const win = (m) => (m.restOnly ? 'rest-only' : m.forgivingMs === null ? '?' : `${m.forgivingMs.toFixed(0)}ms`);
+
+console.log('IN PLAY ORDER'.padEnd(52) + 'axes (0-100)');
+console.log(
+  '  #  tier    room          par  rot    exec-window  spike edge   plan exec risk  score  rank  belongs'
+);
+let prevTier = '';
+for (const m of rooms) {
+  if (m.tier !== prevTier) {
+    console.log('  ' + '-'.repeat(100));
+    prevTier = m.tier;
+  }
+  const misfiled = m.shouldBe !== m.tier ? `  ${m.shouldBe.toUpperCase()}` : '';
+  console.log(
+    `  ${String(m.n).padStart(2)} ${m.tier.padEnd(7)} ${m.name.padEnd(13)} ` +
+      `${String(m.par).padStart(2)}  ${String(m.rotations).padStart(2)}  ${win(m).padStart(12)}  ` +
+      `${String(m.spikes).padStart(4)} ${String(m.openEdges).padStart(4)}   ` +
+      `${(100 * planScore(m)).toFixed(0).padStart(4)} ${(100 * execScore(m)).toFixed(0).padStart(4)} ` +
+      `${(100 * riskScore(m)).toFixed(0).padStart(4)}  ${m.score.toFixed(1).padStart(5)}  ` +
+      `${String(m.rank).padStart(4)}${misfiled}`
+  );
+}
+
+// --- summaries --------------------------------------------------------------
+
+console.log('\nTIER AVERAGES');
+console.log('  tier     par   score   needs-timing   avg spikes   avg open edges');
+for (const tier of TIERS) {
+  const inTier = rooms.filter((m) => m.tier === tier);
+  const avg = (f) => (inTier.reduce((s, m) => s + f(m), 0) / inTier.length).toFixed(1);
+  const timed = inTier.filter((m) => !m.restOnly).length;
+  console.log(
+    `  ${tier.padEnd(8)} ${avg((m) => m.par).padStart(4)}  ${avg((m) => m.score).padStart(6)}` +
+      `   ${String(timed).padStart(6)}/10   ${avg((m) => m.spikes).padStart(10)}   ${avg((m) => m.openEdges).padStart(14)}`
+  );
+}
+
+console.log('\nMISFILED (by composite rank)');
+const misfiled = rooms.filter((m) => m.shouldBe !== m.tier);
+const order = Object.fromEntries(TIERS.map((t, i) => [t, i]));
+misfiled.sort((a, b) => order[a.tier] - order[b.tier] || a.n - b.n);
+for (const m of misfiled) {
+  const dir = order[m.shouldBe] > order[m.tier] ? 'under-rated' : 'over-rated';
+  console.log(
+    `  ${String(m.n).padStart(2)} ${m.name.padEnd(13)} filed ${m.tier.padEnd(7)} -> ${m.shouldBe.padEnd(7)} (${dir}, rank ${m.rank})`
+  );
+}
+console.log(`\n  ${misfiled.length} of ${rooms.length} rooms are in the wrong tenth.`);
+
+// The composite's weights are a judgement call, so here is the part that is not:
+// pairs where a room in an EASIER tier beats one in a HARDER tier on every axis
+// at once. No weighting can reverse those.
+console.log('\nSTRICT INVERSIONS (easier-tier room dominates a harder-tier room on all three axes)');
+const axes = (m) => [m.rotations, execScore(m), riskScore(m)];
+const inversions = [];
+for (const easy of rooms) {
+  for (const hard of rooms) {
+    if (order[easy.tier] >= order[hard.tier]) continue;
+    const a = axes(easy);
+    const b = axes(hard);
+    if (a.every((v, i) => v >= b[i]) && a.some((v, i) => v > b[i])) {
+      inversions.push({ easy, hard });
+    }
+  }
+}
+for (const { easy, hard } of inversions) {
+  console.log(
+    `  ${easy.tier.padEnd(6)} #${String(easy.n).padStart(2)} ${easy.name.padEnd(12)} ` +
+      `>= ${hard.tier.padEnd(6)} #${String(hard.n).padStart(2)} ${hard.name.padEnd(12)} ` +
+      `(rot ${easy.rotations} vs ${hard.rotations}, spikes ${easy.spikes} vs ${hard.spikes}, edges ${easy.openEdges} vs ${hard.openEdges})`
+  );
+}
+console.log(`  ${inversions.length} inversion(s).`);
+
+console.log('\nPROPOSED TIERS (existing forty rooms, resorted by measured difficulty)');
+for (const tier of TIERS) {
+  const members = ranked.filter((m) => m.shouldBe === tier);
+  console.log(`  ${tier.padEnd(7)} ${members.map((m) => `${m.name}(${m.score.toFixed(0)})`).join('  ')}`);
+}
+
+console.log('\nMONOTONICITY (does difficulty rise as you play?)');
+for (const tier of TIERS) {
+  const inTier = rooms.filter((m) => m.tier === tier);
+  const drops = [];
+  for (let i = 1; i < inTier.length; i++) {
+    const d = inTier[i].score - inTier[i - 1].score;
+    if (d < -5) drops.push(`${inTier[i - 1].name}->${inTier[i].name} ${d.toFixed(0)}`);
+  }
+  console.log(`  ${tier.padEnd(8)} ${drops.length} backward step(s)${drops.length ? ': ' + drops.join(', ') : ''}`);
+}
