@@ -63,7 +63,9 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var font := DrawUtil.display()
-	var centre := Vector2(Const.DESIGN_W / 2.0, Const.DESIGN_H / 2.0)
+	# Centre of the real viewport, not of the design box: `expand` reveals extra
+	# area, and a pop anchored to the box would sit off-centre on a phone.
+	var centre: Vector2 = get_global_transform().affine_inverse() * (get_viewport_rect().size / 2.0)
 
 	for pop in _pops:
 		var age: float = pop["age"]

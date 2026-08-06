@@ -6,64 +6,76 @@
 [ext_resource type="Script" uid="uid://172o6mby22oa" path="res://src/pit.gd" id="4_pit"]
 [ext_resource type="Script" uid="uid://yffrm4jucypp" path="res://src/room_view.gd" id="5_room"]
 [ext_resource type="Script" uid="uid://cqbf1okxa5fjq" path="res://src/particles.gd" id="6_particles"]
-[ext_resource type="Script" uid="uid://b81s3ylbs0ie1" path="res://src/hud.gd" id="7_hud"]
 [ext_resource type="Script" uid="uid://clfjoh56io2gv" path="res://src/ui/header_bar.gd" id="8_header"]
 [ext_resource type="Script" uid="uid://bdddsfh14h7n4" path="res://src/ui/rewards.gd" id="9_rewards"]
 [ext_resource type="Script" uid="uid://bojbm8n11m68q" path="res://src/ui/feedback.gd" id="10_feedback"]
 [ext_resource type="Script" uid="uid://b0stkeggy4io4" path="res://src/audio.gd" id="11_audio"]
 [ext_resource type="Script" path="res://src/warmup.gd" id="12_warmup"]
+[ext_resource type="Script" path="res://src/compass.gd" id="13_compass"]
+[ext_resource type="Script" path="res://src/controls.gd" id="14_controls"]
+[ext_resource type="Script" path="res://src/fade.gd" id="15_fade"]
 
-[node name="Main" type="Node2D" unique_id=2050899325]
+[node name="Main" type="Node2D"]
 script = ExtResource("1_game")
 
-[node name="Background" type="Node2D" parent="." unique_id=1277105069]
+[node name="Background" type="Node2D" parent="."]
 script = ExtResource("2_bg")
 
-[node name="Surface" type="Node2D" parent="." unique_id=1445085039]
+[node name="Surface" type="Node2D" parent="."]
 
-[node name="Shake" type="Node2D" parent="Surface" unique_id=1602177824]
+[node name="Top" type="Node2D" parent="Surface"]
 
-[node name="LevelLabel" type="Node2D" parent="Surface/Shake" unique_id=1076901990]
+[node name="Header" type="Node2D" parent="Surface/Top"]
+script = ExtResource("8_header")
+
+[node name="Compass" type="Node2D" parent="Surface/Top"]
+script = ExtResource("13_compass")
+
+[node name="Field" type="Node2D" parent="Surface"]
+
+[node name="Shake" type="Node2D" parent="Surface/Field"]
+
+[node name="LevelLabel" type="Node2D" parent="Surface/Field/Shake"]
 script = ExtResource("3_label")
 
-[node name="Playfield" type="SubViewportContainer" parent="Surface/Shake" unique_id=209534208]
+[node name="Playfield" type="SubViewportContainer" parent="Surface/Field/Shake"]
 offset_left = 78.0
 offset_top = 203.0
 offset_right = 882.0
 offset_bottom = 1007.0
 mouse_filter = 2
 
-[node name="SubViewport" type="SubViewport" parent="Surface/Shake/Playfield" unique_id=2141497962]
+[node name="SubViewport" type="SubViewport" parent="Surface/Field/Shake/Playfield"]
 transparent_bg = true
 handle_input_locally = false
 gui_disable_input = true
 size = Vector2i(804, 804)
 render_target_update_mode = 4
 
-[node name="Dpi" type="Node2D" parent="Surface/Shake/Playfield/SubViewport" unique_id=1625440455]
+[node name="Dpi" type="Node2D" parent="Surface/Field/Shake/Playfield/SubViewport"]
 
-[node name="Pit" type="Node2D" parent="Surface/Shake/Playfield/SubViewport/Dpi" unique_id=215769158]
+[node name="Pit" type="Node2D" parent="Surface/Field/Shake/Playfield/SubViewport/Dpi"]
 script = ExtResource("4_pit")
 
-[node name="Room" type="Node2D" parent="Surface/Shake/Playfield/SubViewport/Dpi" unique_id=1675839563]
+[node name="Room" type="Node2D" parent="Surface/Field/Shake/Playfield/SubViewport/Dpi"]
 script = ExtResource("5_room")
 
-[node name="Particles" type="Node2D" parent="Surface/Shake" unique_id=1886611072]
+[node name="Particles" type="Node2D" parent="Surface/Field/Shake"]
 script = ExtResource("6_particles")
 
-[node name="Hud" type="Node2D" parent="Surface" unique_id=1719353152]
-script = ExtResource("7_hud")
+[node name="Controls" type="Node2D" parent="Surface"]
+script = ExtResource("14_controls")
 
-[node name="Header" type="Node2D" parent="Surface" unique_id=1425839401]
-script = ExtResource("8_header")
+[node name="Fade" type="Node2D" parent="Surface"]
+script = ExtResource("15_fade")
 
-[node name="Rewards" type="Node2D" parent="Surface" unique_id=567467246]
+[node name="Rewards" type="Node2D" parent="Surface"]
 script = ExtResource("9_rewards")
 
-[node name="Feedback" type="Node2D" parent="Surface" unique_id=910305949]
+[node name="Feedback" type="Node2D" parent="Surface"]
 script = ExtResource("10_feedback")
 
-[node name="Audio" type="Node" parent="." unique_id=1392429151]
+[node name="Audio" type="Node" parent="."]
 script = ExtResource("11_audio")
 
 [node name="Warmup" type="Node2D" parent="."]

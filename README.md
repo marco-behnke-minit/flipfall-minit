@@ -80,15 +80,40 @@ and **Canvas Resize Policy: Adaptive**.
 ## Layout
 
 The original is authored against a fixed 960×1480 design surface and cover-scales
-it, capping the crop at 5%. Godot's `canvas_items` / `expand` stretch does not
-crop at all — it *reveals* extra viewport area on the wider axis — so:
+it, capping the crop at 5%. Godot's `canvas_items` / `expand` stretch does the
+opposite — it *reveals* extra viewport area rather than cropping — so the layout
+has to decide what to do with the spare space.
 
-- the viewport is the 960×1480 design surface, and `Surface` is centred in
-  whatever the host actually gives us;
-- `src/background.gd` is the only node that reads `get_viewport_rect()`, and it
-  paints the full revealed area so no unpainted strip can appear at an edge.
+Centring the design box wastes it: on a phone the extra height becomes dead
+margin above and below, while the playfield still sits 5 px off the rotate
+buttons. So the HUD anchors to the real edges instead, which is what the SDK's
+Godot article recommends. Vertically there are three bands:
 
-Everything else is authored in design coordinates exactly as before.
+| Band | Anchored to | Contents |
+| --- | --- | --- |
+| top | viewport top | header bar, gravity compass |
+| field | centred in between | level label, playfield, particles |
+| controls | viewport bottom | rotate buttons, pill |
+
+Everything *inside* a band is still authored in the design coordinates DESIGN.md
+specifies — only the bands move — and at exactly the design aspect all three
+offsets are zero and the authored layout is reproduced exactly. On the game frame
+of an iPhone 16 (~1588 logical px tall) it turns 14 px above the playfield and
+5 px below into 66 px on each side, and drops the dead space under the pill from
+143 px to the design's own 74 px safe-area inset.
+
+Two consequences worth knowing:
+
+- Hit-testing converts a touch into the controls band's own space rather than
+  tracking the offset by hand, so the buttons stay authored at their design
+  coordinates.
+- Flying rewards cross bands — they start at a burst in the field band and land
+  on a header panel in the top band — so `game.gd` adds the band offsets when it
+  spawns them.
+
+Horizontally the design box is simply centred, and `src/background.gd` is the
+only node that reads `get_viewport_rect()`, painting the full revealed area so no
+unpainted strip can appear at an edge.
 
 ## Notes on the port
 
@@ -198,7 +223,9 @@ apply, rather than having been missed:
     src/game.gd         state machine, input, Minit lifecycle
     src/room_view.gd    the room and orb, inside the tumble transform
     src/pit.gd          the recessed frame the room sits in
-    src/hud.gd          compass, rotate buttons, pill, fade
+    src/compass.gd      the gravity compass (top band)
+    src/controls.gd     rotate buttons and pill (bottom band)
+    src/fade.gd         full-viewport transition fade
     src/level_label.gd  room name and place in the run
     src/background.gd   decorative backdrop; the only reader of the live viewport
     src/particles.gd    particle pool

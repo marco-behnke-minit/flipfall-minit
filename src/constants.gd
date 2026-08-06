@@ -37,6 +37,25 @@ const HUD_Y := 60.0
 # inset the rest of the layout already uses, so the bar now spans it exactly.
 const HUD_PAD := 48.0
 
+# ---------------------------------------------------------------------------
+# Vertical bands.
+#
+# The browser build cover-scales its 960x1480 surface and crops, so it never has
+# spare height. Godot's `expand` does the opposite: it reveals extra viewport
+# height, which as a plain centred box turns into dead margin above and below
+# while the playfield still sits 5 px off the rotate buttons. So the HUD anchors
+# to the real edges — top bar to the top, controls to the bottom — and the
+# playfield centres in what is left, which is where the spare height goes.
+#
+# At exactly the design aspect these collapse back to the authored layout.
+# ---------------------------------------------------------------------------
+const TOP_BAND_BOTTOM := 167.0                       # compass bottom, below the header values
+const FIELD_TOP := PF_Y - 44.0                       # top of the level label
+const FIELD_BOTTOM := PF_Y + PF_SIZE + PIT_PAD       # bottom of the recessed frame
+const CONTROLS_TOP := 1130.0 - 118.0                 # ROT_CCW.y - ROT_R
+const CONTROLS_BOTTOM := 1330.0 + 60.0               # PILL_POS.y + PILL_SIZE.y / 2
+const BOTTOM_MARGIN := DESIGN_H * SAFE_INSET         # the safe-area inset, 74
+
 # Orb / simulation. Tuned so a full-width traverse takes about a second: fast
 # enough to feel momentum, slow enough that mid-flight rotations are a fair ask
 # on a touch screen rather than a frame-perfect input.

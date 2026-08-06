@@ -17,7 +17,7 @@ extends Node2D
 ## for, since that happens asynchronously on some backends.
 const FRAMES := 3
 
-const HudScript = preload("res://src/hud.gd")
+const ControlsScript = preload("res://src/controls.gd")
 const LevelLabelScript = preload("res://src/level_label.gd")
 const HeaderScript = preload("res://src/ui/header_bar.gd")
 const FeedbackScript = preload("res://src/ui/feedback.gd")
@@ -38,10 +38,10 @@ func _text_styles() -> Array:
 		[DrawUtil.regular(), Vector2i(HeaderScript.LABEL_SIZE, 0)],
 		[DrawUtil.bold(), Vector2i(HeaderScript.VALUE_SIZE, 0)],
 		[DrawUtil.bold(), Vector2i(LevelLabelScript.LABEL_SIZE, 0)],
-		[DrawUtil.bold(), Vector2i(HudScript.HINT_TITLE_SIZE, 0)],
-		[DrawUtil.bold(), Vector2i(HudScript.RETRY_TITLE_SIZE, 0)],
-		[DrawUtil.semibold(), Vector2i(HudScript.HINT_SUB_SIZE, 0)],
-		[DrawUtil.semibold(), Vector2i(HudScript.RETRY_SUB_SIZE, 0)],
+		[DrawUtil.bold(), Vector2i(ControlsScript.HINT_TITLE_SIZE, 0)],
+		[DrawUtil.bold(), Vector2i(ControlsScript.RETRY_TITLE_SIZE, 0)],
+		[DrawUtil.semibold(), Vector2i(ControlsScript.HINT_SUB_SIZE, 0)],
+		[DrawUtil.semibold(), Vector2i(ControlsScript.RETRY_SUB_SIZE, 0)],
 		# The expensive ones.
 		[DrawUtil.display(), Vector2i(FeedbackScript.SIZE, 0)],
 		[DrawUtil.display(), Vector2i(FeedbackScript.SIZE, FeedbackScript.OUTLINE_STROKE)],

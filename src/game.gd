@@ -13,15 +13,19 @@ extends Node2D
 const Warmup = preload("res://src/warmup.gd")
 
 @onready var _surface: Node2D = $Surface
-@onready var _shake_node: Node2D = $Surface/Shake
-@onready var _playfield: SubViewportContainer = $Surface/Shake/Playfield
-@onready var _sub_viewport: SubViewport = $Surface/Shake/Playfield/SubViewport
-@onready var _dpi: Node2D = $Surface/Shake/Playfield/SubViewport/Dpi
-@onready var _room: Node2D = $Surface/Shake/Playfield/SubViewport/Dpi/Room
-@onready var _label: Node2D = $Surface/Shake/LevelLabel
-@onready var _particles: Node2D = $Surface/Shake/Particles
-@onready var _hud: Node2D = $Surface/Hud
-@onready var _header: Node2D = $Surface/Header
+@onready var _top: Node2D = $Surface/Top
+@onready var _field: Node2D = $Surface/Field
+@onready var _shake_node: Node2D = $Surface/Field/Shake
+@onready var _playfield: SubViewportContainer = $Surface/Field/Shake/Playfield
+@onready var _sub_viewport: SubViewport = $Surface/Field/Shake/Playfield/SubViewport
+@onready var _dpi: Node2D = $Surface/Field/Shake/Playfield/SubViewport/Dpi
+@onready var _room: Node2D = $Surface/Field/Shake/Playfield/SubViewport/Dpi/Room
+@onready var _label: Node2D = $Surface/Field/Shake/LevelLabel
+@onready var _particles: Node2D = $Surface/Field/Shake/Particles
+@onready var _compass: Node2D = $Surface/Top/Compass
+@onready var _controls: Node2D = $Surface/Controls
+@onready var _fade_layer: Node2D = $Surface/Fade
+@onready var _header: Node2D = $Surface/Top/Header
 @onready var _rewards: Node2D = $Surface/Rewards
 @onready var _feedback: Node2D = $Surface/Feedback
 @onready var _audio: Node = $Audio
@@ -69,6 +73,11 @@ var _held_ccw := false
 var _held_cw := false
 var _held_pill := false
 
+# Vertical band offsets, recomputed by _layout().
+var _top_dy := 0.0
+var _field_dy := 0.0
+var _bottom_dy := 0.0
+
 var _first_frame_done := false
 var _warmup_frames := 0
 var _flying_points := 0
@@ -97,8 +106,8 @@ func _ready() -> void:
 	_room.world = _world
 	_push_level_label()
 
-	get_viewport().size_changed.connect(_centre_surface)
-	_centre_surface()
+	get_viewport().size_changed.connect(_layout)
+	_layout()
 
 
 ## Values arrive as strings (or empty), so coerce and clamp every one: the bounds
@@ -123,12 +132,36 @@ static func coerce_config(raw: String, spec: Dictionary) -> int:
 	return clampi(v, int(spec["min"]), int(spec["max"]))
 
 
-## `expand` reveals extra viewport area rather than letterboxing, so the design
-## box is centred inside whatever the host gives us and background.gd paints the
-## rest.
-func _centre_surface() -> void:
+## `expand` reveals extra viewport area rather than letterboxing it away, so the
+## HUD anchors to the real edges and the playfield takes the slack.
+##
+## Horizontally the design box is simply centred. Vertically it is split into
+## three bands: the header and compass hang from the top, the rotate buttons and
+## pill hang from the bottom, and the playfield centres in between. Everything
+## inside a band is still authored in the design coordinates DESIGN.md specifies
+## — only the bands themselves move — and at exactly the design aspect all three
+## offsets are zero and the authored layout is reproduced exactly.
+func _layout() -> void:
 	var v := get_viewport_rect().size
-	_surface.position = ((v - Vector2(Const.DESIGN_W, Const.DESIGN_H)) / 2.0).floor()
+	_surface.position = Vector2(floor((v.x - Const.DESIGN_W) / 2.0), 0.0)
+
+	# Top band keeps its design offsets from the top edge.
+	_top_dy = 0.0
+
+	# Controls hang from the bottom edge, at the design's own safe-area inset.
+	var controls_h := Const.CONTROLS_BOTTOM - Const.CONTROLS_TOP
+	var controls_top: float = maxf(Const.CONTROLS_TOP, v.y - Const.BOTTOM_MARGIN - controls_h)
+	_bottom_dy = controls_top - Const.CONTROLS_TOP
+
+	# Playfield centres in what is left between the two.
+	var field_h := Const.FIELD_BOTTOM - Const.FIELD_TOP
+	var spare := (controls_top - Const.TOP_BAND_BOTTOM) - field_h
+	_field_dy = Const.TOP_BAND_BOTTOM + maxf(0.0, spare) / 2.0 - Const.FIELD_TOP
+
+	_top.position = Vector2(0.0, _top_dy)
+	_field.position = Vector2(0.0, _field_dy)
+	_controls.position = Vector2(0.0, _bottom_dy)
+
 	_match_playfield_to_device()
 
 
@@ -239,7 +272,9 @@ func _on_touch(viewport_pos: Vector2, pressed: bool) -> void:
 		_held_pill = false
 		return
 
-	var p := viewport_pos - _surface.position
+	# Into the controls band's own space, so the hit tests below stay in the
+	# design coordinates the buttons are authored in.
+	var p: Vector2 = _controls.get_global_transform().affine_inverse() * viewport_pos
 
 	# The glyph describes what the player sees happen to the room, not what
 	# happens to the gravity vector — and those are opposites. Turning gravity
@@ -319,7 +354,8 @@ func _on_level_clear() -> void:
 	_particles.burst(from, Const.C_EXIT, 28, 460.0)
 
 	_flying_points += gained
-	_rewards.spawn(gained, from, _header.get_panel_position(_panel_score), 34.0,
+	_rewards.spawn(gained, from + Vector2(0.0, _field_dy),
+		_header.get_panel_position(_panel_score) + Vector2(0.0, _top_dy), 34.0,
 		func() -> void:
 			# The run can end while points are still in the air — _end_run()
 			# already banked everything in flight, so don't add it a second time.
@@ -519,15 +555,17 @@ func _render() -> void:
 		_room.show_orb = _phase != "dying"
 	_room.queue_redraw()
 
-	_hud.world_angle = _world_angle
-	_hud.compass_pulse = _compass_pulse
-	_hud.held_ccw = _held_ccw
-	_hud.held_cw = _held_cw
-	_hud.held_pill = _held_pill
-	_hud.live = _phase == "armed" or _phase == "play"
-	_hud.attention = _phase == "armed" and _level_index == _start_level and _world.rotations == 0
-	_hud.fade = _fade
-	_hud.time_ms = _time_ms
+	_compass.world_angle = _world_angle
+	_compass.pulse = _compass_pulse
+
+	_controls.held_ccw = _held_ccw
+	_controls.held_cw = _held_cw
+	_controls.held_pill = _held_pill
+	_controls.live = _phase == "armed" or _phase == "play"
+	_controls.attention = _phase == "armed" and _level_index == _start_level and _world.rotations == 0
+	_controls.time_ms = _time_ms
+
+	_fade_layer.amount = _fade
 
 
 ## The SDK is explicit that the host overlays its result screen and takes focus
@@ -536,7 +574,9 @@ func _render() -> void:
 ## HUD overlays and the music are left alone; the host fades them out itself.
 func _stop_drawing() -> void:
 	set_process(false)
-	_hud.set_process(false)
+	_compass.set_process(false)
+	_controls.set_process(false)
+	_fade_layer.set_process(false)
 	_particles.set_process(false)
 	_background.set_process(false)
 	_sub_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED

@@ -1,19 +1,14 @@
 extends Node2D
-## Everything drawn in design-surface coordinates on top of the playfield: the
-## gravity compass, the level label, the two rotate buttons, the bottom pill and
-## the transition fade.
+## The two rotate buttons and the bottom pill.
 ##
-## Purely a view — game.gd owns every value below and pushes it in each frame.
-
-var world_angle := 0.0
-var compass_pulse := 0.0
-var held_ccw := false
-var held_cw := false
-var held_pill := false
-var live := true
-var attention := false      # room 1, before the first rotation
-var fade := 0.0
-var time_ms := 0.0
+## This whole band anchors to the bottom edge of the viewport, so the spare
+## height `expand` reveals opens up between the playfield and the controls
+## instead of piling up as dead space underneath them. game.gd positions the
+## node; everything below is drawn in design coordinates as before, which is also
+## what makes hit-testing work — game.gd converts a touch into this node's local
+## space rather than tracking the offset itself.
+##
+## Purely a view: game.gd owns every value below and pushes it in each frame.
 
 # Named so src/warmup.gd can pre-rasterise exactly these sizes, and cannot drift
 # out of step with them.
@@ -22,65 +17,22 @@ const HINT_SUB_SIZE := 20
 const RETRY_TITLE_SIZE := 27
 const RETRY_SUB_SIZE := 17
 
+var held_ccw := false
+var held_cw := false
+var held_pill := false
+var live := true
+var attention := false      # room 1, before the first rotation
+var time_ms := 0.0
+
 
 func _process(_delta: float) -> void:
 	queue_redraw()
 
 
 func _draw() -> void:
-	_draw_compass()
 	_draw_rotate_button(false, held_ccw)
 	_draw_rotate_button(true, held_cw)
 	_draw_pill("hint" if attention else "retry", held_pill)
-	_draw_fade()
-
-
-## The transition fade has to cover the whole viewport, not just the design box.
-## `expand` reveals extra area beside the 960x1480 surface — vertically on a
-## typical phone — and fading only the design box would leave lit bands there on
-## every level change and death. Drawn here rather than over the header, feedback
-## and rewards, which the SDK layers above the game in the browser build too.
-func _draw_fade() -> void:
-	if fade <= 0.0:
-		return
-	var c := Const.C_BG
-	c.a = minf(1.0, fade)
-	# This node is only translated, never scaled, so viewport extents map
-	# one-to-one into local space.
-	var origin := get_global_transform().affine_inverse() * Vector2.ZERO
-	draw_rect(Rect2(origin, get_viewport_rect().size), c)
-
-
-# --- compass ----------------------------------------------------------------
-
-## Because the room tumbles, gravity is always screen-down — so the arrow is
-## fixed and the dial rotates instead, showing how far the room has turned from
-## how the player first read it. The amber tick is the room's original top.
-func _draw_compass() -> void:
-	var o := Const.COMPASS
-	var r := Const.COMPASS_R
-
-	DrawUtil.stroke_arc(self, o, r, 0.0, TAU, Color(1, 1, 1, 0.16), 3.0)
-
-	# Rotating dial: the room's orientation.
-	for i in 4:
-		draw_set_transform(o, world_angle + (float(i) / 4.0) * TAU, Vector2.ONE)
-		if i == 0:
-			draw_rect(Rect2(-4, -r - 3, 8, 13), Const.C_BUTTON)
-		else:
-			draw_rect(Rect2(-2, -r - 1, 4, 9), Color(1, 1, 1, 0.22))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
-	# Fixed gravity arrow — down is always down.
-	var s := 1.0 + compass_pulse * 0.16
-	draw_set_transform(o, 0.0, Vector2(s, s))
-	DrawUtil.glow(self, Vector2(0, r - 20), 20.0, Const.C_ORB,
-		14.0 + compass_pulse * 20.0, 0.6 + compass_pulse * 1.2, 4)
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(0, r - 8), Vector2(-15, r - 30), Vector2(0, r - 24), Vector2(15, r - 30),
-	]), Const.C_ORB)
-	draw_rect(Rect2(-2.5, -r + 12, 5, r - 22), Color(1, 1, 1, 0.5))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
 # --- rotate buttons ---------------------------------------------------------

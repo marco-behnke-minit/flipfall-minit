@@ -39,16 +39,24 @@ func _initialize() -> void:
 	print("gap left-group -> compass : %.0f px" % (compass_l - left_end))
 	print("gap compass -> score      : %.0f px" % (score_start - compass_r))
 
+	# Vertical bands, at a few viewport heights. `expand` never gives less than
+	# the design height, so 1480 is the floor.
 	print("")
-	var pit_bottom := Const.PF_Y + Const.PF_SIZE + Const.PIT_PAD
-	var button_top := Const.ROT_CCW.y - Const.ROT_R
-	print("playfield frame bottom : %.0f" % pit_bottom)
-	print("rotate button top      : %.0f  (clearance %.0f px)" % [button_top, button_top - pit_bottom])
-	# The attention halo used to overlap the playfield; it now reaches the same
-	# distance the original's shadowBlur did, at its widest pulse.
-	var halo_top := Const.ROT_CCW.y - (Const.ROT_R + 16.0 + 26.0)
-	var overlap := pit_bottom - halo_top
-	print("attention halo top     : %.0f  (%s)" % [halo_top,
-		"OVERLAPS the frame by %.0f px" % overlap if overlap > 0.0
-		else "clears the frame by %.0f px" % -overlap])
+	print("%-10s %10s %10s %10s" % ["viewport", "above pf", "below pf", "under pill"])
+	for height in [1480.0, 1520.0, 1587.0, 1700.0]:
+		var controls_h := Const.CONTROLS_BOTTOM - Const.CONTROLS_TOP
+		var controls_top: float = maxf(Const.CONTROLS_TOP, height - Const.BOTTOM_MARGIN - controls_h)
+		var field_h := Const.FIELD_BOTTOM - Const.FIELD_TOP
+		var spare: float = maxf(0.0, (controls_top - Const.TOP_BAND_BOTTOM) - field_h)
+		var field_dy := Const.TOP_BAND_BOTTOM + spare / 2.0 - Const.FIELD_TOP
+		print("%-10.0f %10.0f %10.0f %10.0f" % [
+			height,
+			(Const.FIELD_TOP + field_dy) - Const.TOP_BAND_BOTTOM,
+			controls_top - (Const.FIELD_BOTTOM + field_dy),
+			height - (controls_top + controls_h),
+		])
+	# The attention halo reaches ROT_R + shadowBlur above the button centre; it
+	# used to be sized as a multiple of the radius and washed over the playfield.
+	print("")
+	print("attention halo reaches %.0f px above the button top" % (16.0 + 26.0))
 	quit()
