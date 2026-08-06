@@ -27,6 +27,19 @@ if ! find "$HOME/Library/Application Support/Godot/export_templates" \
   exit 1
 fi
 
+# Verify before building, so a broken config or a drifted simulation can never
+# reach an upload.
+echo "==> verifying"
+node tools/check-meta.mjs
+"$GODOT" --headless --script res://tools/test_score.gd >/dev/null
+"$GODOT" --headless --script res://tools/test_config.gd >/dev/null
+echo "scoring and config checks passed"
+if [ -d ../flipfall ]; then
+  node tools/compare-trace.mjs | tail -1
+else
+  echo "skipping physics comparison — ../flipfall not present" >&2
+fi
+
 rm -rf "$OUT" "$ZIP"
 mkdir -p "$OUT"
 
@@ -39,6 +52,25 @@ cp meta.json "$OUT/meta.json"
 
 echo "==> packaging"
 ( cd "$OUT" && zip -qr "../../$ZIP" . )
+
+# Pre-flight. The console rejects an archive that still looks like a project, so
+# refuse to hand over one rather than finding out on upload.
+echo "==> pre-flight"
+listing=$(unzip -Z1 "$ZIP")
+fail=0
+for required in index.html meta.json; do
+  grep -qx "$required" <<<"$listing" || { echo "MISSING at ZIP root: $required" >&2; fail=1; }
+done
+# A dotfile shipped inside an upload of the HTML5 build before its equivalent
+# check existed.
+forbidden=$(grep -E '(^|/)(src|tools)/|(^|/)\.|\.gd$|\.tscn$|\.import$|package\.json$|vite\.config\.' <<<"$listing" || true)
+if [ -n "$forbidden" ]; then
+  echo "FORBIDDEN entries in ZIP:" >&2
+  echo "$forbidden" >&2
+  fail=1
+fi
+[ "$fail" -eq 0 ] || { echo "pre-flight failed — not uploading this" >&2; exit 1; }
+echo "index.html and meta.json at root, no project files, no dotfiles"
 
 echo
 echo "wrote $ZIP"

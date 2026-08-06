@@ -13,7 +13,8 @@ document — this README only covers what the port does differently.
 ```bash
 godot --path .                                   # play it
 node tools/compare-trace.mjs                     # physics == the original's
-godot --headless --script res://tools/test_score.gd   # scoring + flavor text
+godot --headless --script res://tools/test_score.gd    # scoring + flavor text
+godot --headless --script res://tools/test_config.gd  # config coercion + clamping
 node tools/check-meta.mjs                        # meta.json == src/constants.gd
 godot --script res://tools/gallery.gd --resolution 960x1480   # one still per room
 godot --script res://tools/fade_check.gd --resolution 480x1200 # fade at a phone aspect
@@ -123,6 +124,26 @@ pixels-per-design-unit ratio and the container is scaled back down.
 the original synthesised them in WebAudio — including an RBJ band-pass standing
 in for the `BiquadFilterNode`. The music track is the one real audio asset and,
 as before, is deliberately left playing under the host's result screen.
+
+### What DESIGN.md describes that is not in this repo
+
+Three things the design document specifies deliberately live elsewhere or do not
+apply, rather than having been missed:
+
+- **The solver (`npm run solve`, `tools/search.js`, `.levelcache.json`).** Not
+  ported. Its output is still what backs this build: `par` values come from it,
+  and `tools/compare-trace.mjs` shows this simulation is the one it searched, so
+  the proofs transfer. The consequence is that **editing `src/levels.gd` here has
+  nothing to re-verify it** — room changes belong in `../flipfall`, where the
+  solver can prove them, and come back as data.
+- **The `meta.schema.json` layer of `check-meta`.** `meta.json` is byte-identical
+  to `../flipfall/public/meta.json`, which is schema-validated there, so this
+  repo's `tools/check-meta.mjs` implements only the semantic layer — the
+  cross-field and cross-file rules, including agreement with `src/constants.gd`.
+- **The music "volume routes" (`element` / `webaudio` / `fixed`).** Those exist
+  to work around a tainted `MediaElementSource` and a read-only `el.volume` on
+  iOS. Godot plays the stream through its own mixer, where `volume_db` is always
+  writable, so there is one route and `duck_music()` just tweens it.
 
 ### Known deviations
 

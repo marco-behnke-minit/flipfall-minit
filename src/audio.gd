@@ -147,6 +147,20 @@ func duck_music(seconds: float = 0.7, to: float = 0.4) -> void:
 		_ramp_music(MUSIC_LEVEL, seconds * 0.7)
 
 
+## Pause with the tab, resume if the run is still live — the design's
+## `visibilitychange` behaviour. Godot's web platform raises the window-focus
+## notifications from the browser's blur/visibility events, so this covers a
+## backgrounded tab as well as an unfocused desktop window.
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+			if _music_wanted and _music != null:
+				_music.stream_paused = true
+		NOTIFICATION_APPLICATION_FOCUS_IN, NOTIFICATION_WM_WINDOW_FOCUS_IN:
+			if _music_wanted and _music != null:
+				_music.stream_paused = false
+
+
 func _ramp_music(to: float, seconds: float) -> void:
 	if _music_tween != null and _music_tween.is_valid():
 		_music_tween.kill()

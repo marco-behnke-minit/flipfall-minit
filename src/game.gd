@@ -26,6 +26,8 @@ extends Node2D
 @onready var _background: Node2D = $Background
 
 # --- config -----------------------------------------------------------------
+static var _LEADING_INT := RegEx.create_from_string("^[+-]?\\d+")
+
 var _start_attempts := Const.ATTEMPTS
 var _start_level := 0
 var _end_level := 9
@@ -99,10 +101,21 @@ func _ready() -> void:
 ## declared in meta.json constrain the create wizard, not a hand-edited URL.
 ## Bounds come from Const.CONFIG so they cannot drift from what we declared.
 func _config_number(key: String) -> int:
-	var spec := Const.config_spec(key)
+	return coerce_config(String(Minit.get_config_value(key, "")), Const.config_spec(key))
+
+
+## Coerce and clamp one raw config value. Static and spec-driven so
+## tools/test_config.gd can exercise it without a host.
+##
+## parseInt semantics, matching the original: take the leading integer and
+## ignore whatever follows it ("5.9" -> 5), and fall back to the declared default
+## when there is no leading integer at all. Godot's to_int() would turn "abc"
+## into 0, which clamps to the *minimum* rather than the default — so
+## `attempts=abc` would silently hand out one attempt instead of three.
+static func coerce_config(raw: String, spec: Dictionary) -> int:
 	var fallback := int(spec["value"])
-	var raw := String(Minit.get_config_value(key, str(fallback)))
-	var v := int(raw) if raw.is_valid_int() else fallback
+	var leading := _LEADING_INT.search(raw.strip_edges())
+	var v := int(leading.get_string()) if leading != null else fallback
 	return clampi(v, int(spec["min"]), int(spec["max"]))
 
 
