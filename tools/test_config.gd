@@ -47,6 +47,17 @@ func _initialize() -> void:
 	_check("attempts=0 clamps to the min", game.coerce_config("0", attempts), 1)
 	_check("startLevel=999 clamps to 40", game.coerce_config("999", start_level), 40)
 
+	# Command-line overrides, for running outside the Minit host.
+	var args := PackedStringArray(["--attempts=9", "--startLevel=31", "endLevel=40", "--other=1"])
+	_check("--key=value", game.parse_override(args, "attempts"), "9")
+	_check("bare key=value", game.parse_override(args, "endLevel"), "40")
+	_check("absent key -> empty", game.parse_override(args, "missing"), "")
+	# A key must match whole, or `Level` would shadow `startLevel`.
+	_check("no partial-key match", game.parse_override(args, "Level"), "")
+	# Overrides go through the same coercion, so they are clamped too.
+	_check("override is clamped", game.coerce_config(game.parse_override(
+		PackedStringArray(["--attempts=99"]), "attempts"), attempts), 9)
+
 	print("")
 	if _failures > 0:
 		print("%d FAILURE(S)" % _failures)

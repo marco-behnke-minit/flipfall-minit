@@ -51,6 +51,32 @@ Three lifecycle calls, as in the original:
 No start menu, no pause menu, no replay menu, no in-game result UI — the host
 owns all of it. No `userData`: one self-contained session.
 
+### Config, and how to change it locally
+
+The host passes `attempts` / `startLevel` / `endLevel` on the URL query string,
+which the SDK reads. Outside the host there is no query string, so every value
+would be stuck at its default and no segment other than the default could be
+played. Hence a command-line override:
+
+```bash
+godot --path . -- --attempts=9 --startLevel=31 --endLevel=40   # the insane tier
+godot --path . -- --startLevel=22 --endLevel=22                # one room
+```
+
+From the editor, put the same arguments after `--` in **Project Settings →
+Editor → Run → Main Run Args**. The game prints a line on startup when an
+override is active, so a test run can't be mistaken for the shipped defaults.
+
+A web export has no user args, so this is inert in production and cannot shadow
+what the host sends. Overrides go through exactly the same coercion and clamping
+as the host's values, so they cannot reach out-of-range settings either.
+
+The default is the whole forty-room list, which is a long session — publishing
+picks a segment instead. Note that `startLevel` / `endLevel` can only express a
+*contiguous* range, so a drop that samples across tiers (say rooms 1, 11, 21, 31
+for a curve inside one playthrough) is not expressible today; it would need a
+different config key.
+
 **The Godot SDK is the lifecycle facade only.** It has no counterpart to the JS
 SDK's `@minit-games/sdk/ui` module, so the three UI pieces the game uses are
 reimplemented against the same documented contract:

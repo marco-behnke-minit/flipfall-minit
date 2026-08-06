@@ -97,6 +97,14 @@ func _ready() -> void:
 	_attempts = _start_attempts
 	_stats = Score.empty_stats()
 
+	# Say so when running with local overrides, so a test run cannot be mistaken
+	# for the shipped defaults.
+	for spec in Const.CONFIG:
+		if not parse_override(OS.get_cmdline_user_args(), String(spec["key"])).is_empty():
+			print("[flipfall] local config override: attempts=%d, rooms %d-%d (%s)"
+				% [_start_attempts, _start_level + 1, _end_level + 1, Const.tier_of(_start_level)])
+			break
+
 	_panel_attempts = _header.add_panel("Attempts", _start_attempts)
 	_panel_rotations = _header.add_panel("Rotations", "0 / %d" % Levels.ALL[_start_level]["par"])
 	_panel_score = _header.add_panel("Score", 0, "right")
@@ -114,7 +122,31 @@ func _ready() -> void:
 ## declared in meta.json constrain the create wizard, not a hand-edited URL.
 ## Bounds come from Const.CONFIG so they cannot drift from what we declared.
 func _config_number(key: String) -> int:
-	return coerce_config(String(Minit.get_config_value(key, "")), Const.config_spec(key))
+	var raw := parse_override(OS.get_cmdline_user_args(), key)
+	if raw.is_empty():
+		raw = String(Minit.get_config_value(key, ""))
+	return coerce_config(raw, Const.config_spec(key))
+
+
+## Command-line override, for running outside the Minit host.
+##
+## The host passes config on the URL query string, which the SDK reads — but from
+## the editor or a desktop build there is no query string, so every value would
+## be stuck at its default and no segment other than the default could be played.
+## This covers that:
+##
+##   godot --path . -- --attempts=9 --startLevel=31 --endLevel=40
+##
+## and from the editor by putting the same after `--` in Project Settings ->
+## Editor -> Run -> Main Run Args. A web export has no user args, so this is
+## inert in production and cannot shadow what the host sends. Values still go
+## through the same coercion and clamping as the host's.
+static func parse_override(args: PackedStringArray, key: String) -> String:
+	for arg in args:
+		var pair := arg.trim_prefix("--")
+		if pair.begins_with(key + "="):
+			return pair.substr(key.length() + 1)
+	return ""
 
 
 ## Coerce and clamp one raw config value. Static and spec-driven so
