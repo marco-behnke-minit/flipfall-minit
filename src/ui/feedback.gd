@@ -10,6 +10,8 @@ const POP_IN := 0.15
 const FADE_OUT := 0.15
 const HOLD := 1.0
 const SIZE := 110
+const OUTLINE_SHADOW := 10
+const OUTLINE_STROKE := 6
 const MAX_WIDTH := Const.DESIGN_W * 0.85
 
 # The JS variants are vertical gradients with a dark stroke. Godot's text drawing
@@ -92,9 +94,9 @@ func _draw() -> void:
 
 		draw_set_transform(centre + Vector2(0, offset), 0.0, Vector2(scale, scale))
 		draw_string_outline(font, pos + Vector2(0, 8), String(pop["text"]),
-			HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, 10, Color(0, 0, 0, alpha))
+			HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, OUTLINE_SHADOW, Color(0, 0, 0, alpha))
 		draw_string_outline(font, pos, String(pop["text"]),
-			HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, 6, stroke)
+			HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, OUTLINE_STROKE, stroke)
 		draw_string(font, pos, String(pop["text"]),
 			HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE, fill)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

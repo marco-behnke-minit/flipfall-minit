@@ -18,6 +18,7 @@ godot --headless --script res://tools/test_config.gd  # config coercion + clampi
 node tools/check-meta.mjs                        # meta.json == src/constants.gd
 godot --script res://tools/gallery.gd --resolution 960x1480   # one still per room
 godot --script res://tools/fade_check.gd --resolution 480x1200 # fade at a phone aspect
+godot --script res://tools/measure_stall.gd --resolution 960x1480 # frame spike at the first pop
 tools/package.sh                                 # export + upload ZIP
 ```
 
@@ -126,6 +127,25 @@ job `ctx.clip()` did. Because a SubViewport renders at its own pixel size and
 would be blurred on a dense screen, its size tracks the real
 pixels-per-design-unit ratio and the container is scaled back down.
 
+**Nothing is left to load lazily.** Godot fills the font atlas on first use, per
+(face, size, outline) — and the feedback pops are Bowlby One SC at 110 px drawn
+three times over, a fill plus two outline passes. Left alone, the first pop
+rasterises all of that inside a frame, which lands exactly on an interesting
+beat: the first door opening, or the first room cleared. Measured on an M3 Max,
+that frame cost **28.1 ms against an 8.3 ms median — a +19.8 ms spike**, and a
+wasm build on a phone is several times worse.
+
+`src/warmup.gd` pays it up front instead: it pre-rasterises every glyph the game
+can draw and primes each canvas draw pipeline, during the frames *before*
+`Minit.loading_done()` fires — while the host still has its loading state over
+the WebView, so the player never sees it. The same frame now costs 9.1 ms, a
++0.0 ms spike. `tools/measure_stall.gd` is the A/B, and `tools/measure_warmup.gd`
+breaks the cost down by face and size.
+
+The text sizes live as named constants on the scripts that draw them, and the
+warm-up references those rather than repeating the numbers, so the list cannot
+quietly fall out of step with the drawing code.
+
 **Sound effects are synthesised at startup** into `AudioStreamWAV` buffers, as
 the original synthesised them in WebAudio — including an RBJ band-pass standing
 in for the `BiquadFilterNode`. The music track is the one real audio asset and,
@@ -183,6 +203,7 @@ apply, rather than having been missed:
     src/background.gd   decorative backdrop; the only reader of the live viewport
     src/particles.gd    particle pool
     src/audio.gd        synthesised SFX + music
+    src/warmup.gd       glyph + pipeline warm-up, before loading_done()
     src/draw_util.gd    rounded rects, arcs, letter-spaced text, fonts
     assets/fonts/       Lato + Bowlby One SC (SIL OFL), as used by the SDK
     src/ui/             header bar, feedback pops, flying rewards

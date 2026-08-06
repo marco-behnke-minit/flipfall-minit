@@ -10,6 +10,8 @@ extends Node2D
 ## There is no start menu, pause menu, replay menu or in-game result UI: a drop
 ## is one session and the host owns everything either side of it.
 
+const Warmup = preload("res://src/warmup.gd")
+
 @onready var _surface: Node2D = $Surface
 @onready var _shake_node: Node2D = $Surface/Shake
 @onready var _playfield: SubViewportContainer = $Surface/Shake/Playfield
@@ -24,6 +26,7 @@ extends Node2D
 @onready var _feedback: Node2D = $Surface/Feedback
 @onready var _audio: Node = $Audio
 @onready var _background: Node2D = $Background
+@onready var _warmup: Node2D = $Warmup
 
 # --- config -----------------------------------------------------------------
 static var _LEADING_INT := RegEx.create_from_string("^[+-]?\\d+")
@@ -67,6 +70,7 @@ var _held_cw := false
 var _held_pill := false
 
 var _first_frame_done := false
+var _warmup_frames := 0
 var _flying_points := 0
 
 
@@ -398,10 +402,16 @@ func _process(delta: float) -> void:
 	_render()
 
 	if not _first_frame_done:
-		_first_frame_done = true
-		# The host keeps a loading state over the WebView until this fires, so it
-		# goes out on the first frame the player could actually act on.
-		Minit.loading_done()
+		# The host keeps a loading state over the WebView until loading_done()
+		# fires, so the warm-up runs underneath it: glyph atlases and canvas
+		# pipelines are built here rather than during the first feedback pop.
+		_warmup_frames += 1
+		if _warmup_frames == 1:
+			_warmup.prime()
+		elif _warmup_frames >= Warmup.FRAMES:
+			_warmup.finish()
+			_first_frame_done = true
+			Minit.loading_done()
 
 	if _phase == "over":
 		_stop_drawing()

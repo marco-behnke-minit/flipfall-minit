@@ -11,6 +11,7 @@
 [ext_resource type="Script" uid="uid://bdddsfh14h7n4" path="res://src/ui/rewards.gd" id="9_rewards"]
 [ext_resource type="Script" uid="uid://bojbm8n11m68q" path="res://src/ui/feedback.gd" id="10_feedback"]
 [ext_resource type="Script" uid="uid://b0stkeggy4io4" path="res://src/audio.gd" id="11_audio"]
+[ext_resource type="Script" path="res://src/warmup.gd" id="12_warmup"]
 
 [node name="Main" type="Node2D" unique_id=2050899325]
 script = ExtResource("1_game")
@@ -64,3 +65,6 @@ script = ExtResource("10_feedback")
 
 [node name="Audio" type="Node" parent="." unique_id=1392429151]
 script = ExtResource("11_audio")
+
+[node name="Warmup" type="Node2D" parent="."]
+script = ExtResource("12_warmup")

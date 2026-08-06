@@ -4,6 +4,9 @@ extends Node2D
 ## Its own node because it sits inside the screen shake with the playfield, while
 ## the compass, rotate buttons and pill below deliberately stay put.
 
+const LABEL_SIZE := 22
+const TRACKING := 3.0
+
 var level_index := 0    # index within the published segment
 var level_total := 10
 var level_name := ""
@@ -20,8 +23,8 @@ func set_level(index: int, total: int, level_title: String, tier: String) -> voi
 
 func _draw() -> void:
 	var font := DrawUtil.bold()
-	var size := 22
-	var tracking := 3.0
+	var size := LABEL_SIZE
+	var tracking := TRACKING
 	var label := "LEVEL %d / %d  ·  %s" % [level_index + 1, level_total, level_name.to_upper()]
 	var y := Const.PF_Y - 26.0
 	var dim := Color(1, 1, 1, 0.4)

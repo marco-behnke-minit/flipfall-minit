@@ -15,6 +15,13 @@ var attention := false      # room 1, before the first rotation
 var fade := 0.0
 var time_ms := 0.0
 
+# Named so src/warmup.gd can pre-rasterise exactly these sizes, and cannot drift
+# out of step with them.
+const HINT_TITLE_SIZE := 30
+const HINT_SUB_SIZE := 20
+const RETRY_TITLE_SIZE := 27
+const RETRY_SUB_SIZE := 17
+
 
 func _process(_delta: float) -> void:
 	queue_redraw()
@@ -144,11 +151,13 @@ func _draw_pill(mode: String, held: bool) -> void:
 		var small := DrawUtil.semibold()
 		var c1 := Const.C_ORB
 		c1.a = 0.55 + p * 0.45
-		DrawUtil.draw_tracked(self, big, 30, Vector2(0, DrawUtil.middle_baseline(big, 30, -4.0)),
+		DrawUtil.draw_tracked(self, big, HINT_TITLE_SIZE,
+			Vector2(0, DrawUtil.middle_baseline(big, HINT_TITLE_SIZE, -4.0)),
 			"ROTATE GRAVITY", c1, 4.0, 0.5)
 		var c2 := Const.C_HUD
 		c2.a = 0.4 + p * 0.3
-		DrawUtil.draw_tracked(self, small, 20, Vector2(0, DrawUtil.middle_baseline(small, 20, 28.0)),
+		DrawUtil.draw_tracked(self, small, HINT_SUB_SIZE,
+			Vector2(0, DrawUtil.middle_baseline(small, HINT_SUB_SIZE, 28.0)),
 			"TO BEGIN", c2, 2.0, 0.5)
 	else:
 		var rect := Rect2(-w / 2.0, -h / 2.0, w, h)
@@ -164,12 +173,14 @@ func _draw_pill(mode: String, held: bool) -> void:
 		]), Const.C_SPIKE)
 
 		var big := DrawUtil.bold()
-		DrawUtil.draw_tracked(self, big, 27, Vector2(26, DrawUtil.middle_baseline(big, 27, -9.0)),
+		DrawUtil.draw_tracked(self, big, RETRY_TITLE_SIZE,
+			Vector2(26, DrawUtil.middle_baseline(big, RETRY_TITLE_SIZE, -9.0)),
 			"RETRY", Const.C_SPIKE, 2.0, 0.5)
 		var small := DrawUtil.semibold()
 		var faint := Const.C_SPIKE
 		faint.a = 0.75
-		DrawUtil.draw_tracked(self, small, 17, Vector2(26, DrawUtil.middle_baseline(small, 17, 20.0)),
+		DrawUtil.draw_tracked(self, small, RETRY_SUB_SIZE,
+			Vector2(26, DrawUtil.middle_baseline(small, RETRY_SUB_SIZE, 20.0)),
 			"COSTS 1 ATTEMPT", faint, 0.0, 0.5)
 
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
