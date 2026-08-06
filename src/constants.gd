@@ -91,12 +91,13 @@ static func tier_of(index: int) -> String:
 # ---------------------------------------------------------------------------
 const CONFIG := [
 	{"key": "attempts", "value_type": "number", "value": ATTEMPTS, "min": ATTEMPTS_MIN, "max": ATTEMPTS_MAX},
-	# start_level / end_level select the segment of the room list a drop plays,
-	# which is how difficulty is published: 1-10 easy, 11-20 medium, 21-30 hard,
-	# 31-40 insane. Locked against mods so a mod cannot swap the room set out
-	# from under a score.
+	# start_level / end_level select the segment of the room list a drop plays.
+	# The default is the whole list; a drop can publish a single difficulty band
+	# instead by setting a tenth — 1-10 easy, 11-20 medium, 21-30 hard, 31-40
+	# insane — since src/levels.gd is sorted by measured difficulty. Locked
+	# against mods so a mod cannot swap the room set out from under a score.
 	{"key": "startLevel", "value_type": "number", "value": 1, "min": 1, "max": LEVEL_COUNT},
-	{"key": "endLevel", "value_type": "number", "value": 10, "min": 1, "max": LEVEL_COUNT},
+	{"key": "endLevel", "value_type": "number", "value": LEVEL_COUNT, "min": 1, "max": LEVEL_COUNT},
 ]
 
 

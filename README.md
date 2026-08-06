@@ -16,6 +16,8 @@ node tools/compare-trace.mjs                     # physics == the original's
 godot --headless --script res://tools/test_score.gd    # scoring + flavor text
 godot --headless --script res://tools/test_config.gd  # config coercion + clamping
 node tools/check-meta.mjs                        # meta.json == src/constants.gd
+node tools/difficulty.mjs                        # rank rooms vs their tier
+node tools/difficulty.mjs --order                # the shipping order it implies
 godot --script res://tools/gallery.gd --resolution 960x1480   # one still per room
 godot --script res://tools/fade_check.gd --resolution 480x1200 # fade at a phone aspect
 godot --script res://tools/measure_stall.gd --resolution 960x1480 # frame spike at the first pop
@@ -115,6 +117,32 @@ Horizontally the design box is simply centred, and `src/background.gd` is the
 only node that reads `get_viewport_rect()`, painting the full revealed area so no
 unpainted strip can appear at an edge.
 
+## Room order
+
+`src/levels.gd` is sorted by measured difficulty, ascending, and the four tiers
+are simply the four tenths of that order — so a drop that publishes a segment
+gets a band that actually rises as it is played.
+
+The ordering came out of `tools/difficulty.mjs`, which scores three independent
+axes from the solver's cache: route length, whether a timing window is required
+at all, and how lethal the room is. `par` alone measures only the first, and
+sorting on it had left the tiers overlapping badly:
+
+| | before | after |
+| --- | --- | --- |
+| strict inversions (easier-tier room beating a harder-tier one on every axis) | 17 | **0** |
+| rooms in the wrong tenth | 20 | **2** |
+| backward difficulty steps within tiers | 12 | **0** |
+| avg par by tier | 3.8 / 6.1 / 8.4 / **7.4** | 3.8 / 6.1 / 6.4 / **9.4** |
+
+The two remaining "misfiles" are deliberate: the cheapest room introducing each
+element is pinned into the easy tier, because easy is also the teaching tier and
+the default drop. That pin is the only departure from a pure sort.
+
+What sorting could *not* fix: the execution axis still is not a curve (1, 1, 4, 2
+rooms per tier need a timing window), because only 8 of 40 rooms demand timing at
+all. That is a level-design gap, not an ordering one.
+
 ## Notes on the port
 
 **Physics is verified, not eyeballed.** `src/sim.gd` is a line-for-line port of
@@ -183,10 +211,13 @@ apply, rather than having been missed:
 
 - **The solver (`npm run solve`, `tools/search.js`, `.levelcache.json`).** Not
   ported. Its output is still what backs this build: `par` values come from it,
-  and `tools/compare-trace.mjs` shows this simulation is the one it searched, so
-  the proofs transfer. The consequence is that **editing `src/levels.gd` here has
-  nothing to re-verify it** — room changes belong in `../flipfall`, where the
-  solver can prove them, and come back as data.
+  `tools/difficulty.mjs` ranks the rooms from its cache, and
+  `tools/compare-trace.mjs` shows this simulation is the one it searched, so the
+  proofs transfer. The rooms themselves are owned here now — including their
+  order — but the *maps* are shared with `../flipfall`, and the cache is keyed by
+  a hash of each map. So reordering rooms here is free, while **editing a map
+  means syncing it to `../flipfall` and re-running the solver**, since nothing
+  here can prove a room solvable.
 - **The `meta.schema.json` layer of `check-meta`.** `meta.json` is byte-identical
   to `../flipfall/public/meta.json`, which is schema-validated there, so this
   repo's `tools/check-meta.mjs` implements only the semantic layer — the
@@ -217,7 +248,7 @@ apply, rather than having been missed:
 ## Layout of the source
 
     src/constants.gd    design surface, layout, tuning, config declaration
-    src/levels.gd       the forty rooms + an authoring validator
+    src/levels.gd       the forty rooms, sorted by difficulty, + a validator
     src/sim.gd          orb simulation (node-free, verified against the JS)
     src/score.gd        scoring + flavor text (pure)
     src/game.gd         state machine, input, Minit lifecycle

@@ -7,9 +7,9 @@
 The player never controls the ball directly.
 
 They rotate **gravity** in 90° increments to guide a rolling orb through
-handcrafted puzzle rooms. Forty rooms across four difficulty tiers; a drop
-publishes a ten-room segment, so one session is ten rooms and two to five
-minutes.
+handcrafted puzzle rooms. Forty rooms, sorted by measured difficulty and split
+into four tiers of ten. A drop publishes all forty by default, and can publish a
+single tier instead by setting `startLevel` / `endLevel`.
 
 ------------------------------------------------------------------------
 
@@ -86,7 +86,7 @@ they first read it.
 
 One run = one session. No menus, no cross-session progression.
 
--   The rooms of the published segment, played in order — ten by default
+-   The rooms of the published segment, played in order — all forty by default
 -   3 **Attempts** shared across the whole run
 -   An Attempt is spent when the player hits spikes, falls out of the
     room, **or** presses Retry — all three mean "I couldn't solve this
@@ -133,7 +133,19 @@ can ever fail before the player has read it, and reading time is free.
     +time   max(0, 200 - seconds x 10) per room
 
 Measured by `tools/run-sim.js`, which plays the segment with the real physics
-and the real scoring module. Rooms 1–10 (`npm run sim -- 15 1 10`):
+and the real scoring module.
+
+The default drop is all forty rooms (`npm run sim -- <think> 1 40`):
+
+| Play style              | Active play | Final score |
+| ----------------------- | ----------- | ----------- |
+| Flawless speedrun       | 5m 01s      | 45208       |
+| Confident (8s/room)     | 10m 21s     | 42035       |
+
+That is a long session for a Minit — the two-to-five-minute target belongs to a
+single ten-room tier, which a drop can still publish on its own.
+
+Rooms 1–10 (`npm run sim -- 15 1 10`):
 
 | Play style              | Active play | Final score |
 | ----------------------- | ----------- | ----------- |
@@ -216,19 +228,24 @@ Forty rooms in four tiers of ten. A drop publishes one segment via the
 `startLevel` / `endLevel` config, so difficulty is a publishing decision
 rather than an in-run curve.
 
-| Tier   | Rooms | Avg par | Character                                          |
-| ------ | ----- | ------- | -------------------------------------------------- |
-| easy   | 1–10  | 3.8     | Teaches one element at a time.                     |
-| medium | 11–20 | 6.1     | Longer chains, spikes as route constraints, open edges. |
-| hard   | 21–30 | 8.4     | Every button opposite its door, so each chamber is crossed twice. |
-| insane | 31–40 | 7.4     | The same, plus places to fall out and brake pads narrow enough that stopping on them is the puzzle. |
+| Tier   | Rooms | Avg par | Needs timing | Character                          |
+| ------ | ----- | ------- | ------------ | ---------------------------------- |
+| easy   | 1–10  | 3.8     | 1/10         | Teaches one element at a time; rest-only apart from the finale. |
+| medium | 11–20 | 6.1     | 1/10         | Longer routes on the same elements; the crossings grow, not the precision. |
+| hard   | 21–30 | 6.4     | 4/10         | Execution starts to matter, and hazards become route constraints. |
+| insane | 31–40 | 9.4     | 2/10         | The longest chains, the most lethal rooms, the narrowest brake pads. |
 
-**Known imbalance:** insane averages *fewer* rotations than hard (7.4 vs
-8.4). Its difficulty is precision and lethality — 175–225 ms brake windows,
-open edges on two sides, spikes in most chambers — not length. Four of its
-rooms (37–40) are short brake puzzles that pull the average down. If the
-tiers should also order by length, those four want a door chain stacked on
-top of the brake.
+**The tiers are the four tenths of a measured ranking**, not an authoring
+judgement — see [Difficulty ranking](#difficulty-ranking). Sorting them this way
+removed 17 strict inversions (an easy room beating a hard room on every axis at
+once), cut misfiled rooms from 20 to 2, and made every tier rise monotonically as
+it is played. The two remaining "misfiles" are deliberate: the sticky teacher is
+pinned into easy, because easy is also the teaching tier.
+
+**Remaining imbalance:** the *execution* axis still is not a curve — 1, 1, 4, 2
+rooms per tier need a timing window. Sorting cannot fix that; only 8 of 40 rooms
+demand any timing at all, so there is nothing to distribute. That is a
+level-design gap, not an ordering one.
 
 ## What actually makes a room harder
 
@@ -241,18 +258,21 @@ and each button sits on, which is what actually changes the answer.
 
 The easy tier teaches one element per room:
 
-| #  | Room     | Teaches                        |
-| -- | -------- | ------------------------------ |
-| 1  | Roll     | rotate gravity                 |
-| 2  | Press    | buttons and doors              |
-| 3  | Climb    | chained doors, gravity-up      |
-| 4  | Teeth    | spikes — look before you leap  |
-| 5  | Detour   | multi-button routing           |
-| 6  | Glide    | ice — fast, hard to stop       |
-| 7  | Skate    | ice + spikes                   |
-| 8  | Grip     | sticky — landing to brake      |
-| 9  | Brake    | ice into a sticky landing zone |
-| 10 | Flipfall | everything at once             |
+| #  | Room     | Teaches                              |
+| -- | -------- | ------------------------------------ |
+| 1  | Roll     | rotate gravity                       |
+| 2  | Press    | buttons and doors                    |
+| 3  | Glide    | ice — fast, hard to stop             |
+| 4  | Ledge    | open edges — you can fall out        |
+| 5  | Teeth    | spikes — look before you leap        |
+| 6  | Climb    | chained doors, gravity-up            |
+| 7  | Rink     | a door chain over ice                |
+| 8  | Needle   | one safe column through the spikes   |
+| 9  | Zigzag   | doors alternating ends               |
+| 10 | Grip     | sticky — landing to brake, and the first room that needs timing |
+
+The cheapest room introducing each element is pinned here, which is the one place
+the ordering departs from a pure difficulty sort.
 
 ------------------------------------------------------------------------
 
@@ -456,6 +476,26 @@ scales with the tier:
 | hard   | 120 ms         |
 | insane | 60 ms          |
 
+## Difficulty ranking
+
+`par` orders rooms by route *length*, which is only one axis of difficulty — it
+says nothing about whether a route needs a timing window, or how much of the room
+kills you for missing it. Sorting on it alone let the tiers overlap badly enough
+that an easy room outranked a hard one.
+
+`tools/difficulty.mjs` (in the Godot project) reads the solver's cache and scores
+every room on three axes:
+
+-   **planning** — rotations on the route a player actually takes
+-   **execution** — whether the room is rest-only solvable at all, and if not,
+    how tight the most forgiving window is
+-   **risk** — spikes, and gaps in the border the orb can leave through
+
+It reports the ranking against the filed tier, and — independent of any weighting
+— every *strict inversion*, where a room in an easier tier beats one in a harder
+tier on all three axes at once. Those are what the room order is sorted to
+remove.
+
 ## Result cache
 
 Searching forty rooms takes 4m 24s, which is far too slow to sit in front of
@@ -506,12 +546,14 @@ Superposting toggle in the create wizard).
 | ------------ | ------ | ------- | ------- | -------- | ------------------------------ |
 | `attempts`   | number | 3       | 1 – 9   | yes      | Failed solves allowed per run  |
 | `startLevel` | number | 1       | 1 – 40  | **no**   | First room of the drop         |
-| `endLevel`   | number | 10      | 1 – 40  | **no**   | Last room of the drop          |
+| `endLevel`   | number | 40      | 1 – 40  | **no**   | Last room of the drop          |
 
-`startLevel` / `endLevel` select the segment of the room list a drop plays,
-which is how difficulty is published: 1–10 easy, 11–20 medium, 21–30 hard,
-31–40 insane. Both are locked (`moddable: false`) on purpose — a mod that
-swapped the room set would report a score for a run nobody played.
+`startLevel` / `endLevel` select the segment of the room list a drop plays. The
+default is the whole list; a drop can publish a single difficulty band instead by
+setting a tenth — 1–10 easy, 11–20 medium, 21–30 hard, 31–40 insane — because the
+list is sorted by measured difficulty. Both are locked (`moddable: false`) on
+purpose — a mod that swapped the room set would report a score for a run nobody
+played.
 
 `tools/check-meta.js` validates in two layers:
 

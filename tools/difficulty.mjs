@@ -9,13 +9,38 @@
 // about how much of the room kills you for missing it. Those are independent
 // axes, and a tier list sorted on one of them can flatten while looking fine.
 //
-// Reads .levelcache.json, which `npm run solve` fills in the sibling HTML5
-// project — so run the solver there first if the cache is cold.
+// Rooms come from src/levels.gd — this project is the source of truth for them.
+// The solved routes come from .levelcache.json, which `npm run solve` fills in
+// the sibling HTML5 project, where the solver lives. That cache is keyed by a
+// hash of each room's own map, so it stays valid however the rooms are ordered
+// here, and only goes stale if a map is actually edited.
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { LEVELS } from '../../flipfall/src/levels.js';
-import { GRID, TIERS, TIER_SIZE, tierOf } from '../../flipfall/src/constants.js';
 
+const GRID = 13;
+const TIERS = ['easy', 'medium', 'hard', 'insane'];
+const TIER_SIZE = 10;
+const tierOf = (i) => TIERS[Math.floor(i / TIER_SIZE)];
+
+/** Read the room table straight out of the GDScript. */
+function loadLevels() {
+  const src = readFileSync(new URL('../src/levels.gd', import.meta.url), 'utf8');
+  const levels = [];
+  const re = /\{"name": "([^"]+)", "par": (\d+), "map": \[([\s\S]*?)\]\}/g;
+  for (const m of src.matchAll(re)) {
+    levels.push({
+      name: m[1],
+      par: Number(m[2]),
+      map: [...m[3].matchAll(/"([^"]*)"/g)].map((r) => r[1]),
+    });
+  }
+  if (levels.length !== TIERS.length * TIER_SIZE) {
+    throw new Error(`parsed ${levels.length} rooms from src/levels.gd, expected ${TIERS.length * TIER_SIZE}`);
+  }
+  return levels;
+}
+
+const LEVELS = loadLevels();
 const cachePath = new URL('../../flipfall/.levelcache.json', import.meta.url);
 const cache = JSON.parse(readFileSync(cachePath, 'utf8'));
 const roomHash = (level) =>
@@ -104,6 +129,65 @@ ranked.forEach((m, i) => {
   m.rank = i + 1;
   m.shouldBe = TIERS[Math.floor(i / TIER_SIZE)];
 });
+
+// --- the shipping order -----------------------------------------------------
+//
+// Sorting purely by difficulty is not quite right, because the easy tier has a
+// second job: it is the DEFAULT published segment (startLevel 1, endLevel 10),
+// and it is where each element is taught. A pure sort moves both sticky rooms
+// into medium, so the default drop would never show a mechanic its own store
+// description promises.
+//
+// So: the cheapest room introducing each element is pinned into easy, and
+// everything else falls into place by measured difficulty. Within every tier the
+// order is ascending, which is what kills the sawtooth.
+
+const TEACHES = [
+  ['doors', /[abc]/],
+  ['spikes', /\^/],
+  ['ice', /I/],
+  ['sticky', /T/],
+];
+
+function shippingOrder() {
+  const byScore = [...rooms].sort((a, b) => a.score - b.score);
+  const pinned = [];
+  for (const [, pattern] of TEACHES) {
+    const first = byScore.find((m) => pattern.test(m.map ?? LEVELS[m.n - 1].map.join('')) && !pinned.includes(m));
+    if (first) pinned.push(first);
+  }
+  const easy = [...pinned];
+  for (const m of byScore) {
+    if (easy.length >= TIER_SIZE) break;
+    if (!easy.includes(m)) easy.push(m);
+  }
+  easy.sort((a, b) => a.score - b.score);
+  const rest = byScore.filter((m) => !easy.includes(m));
+  return [...easy, ...rest];
+}
+
+if (process.argv.includes('--order')) {
+  const order = shippingOrder();
+  const teaches = (m) => {
+    const flat = LEVELS[m.n - 1].map.join('');
+    return TEACHES.filter(([, p]) => p.test(flat)).map(([n]) => n);
+  };
+  const seen = new Set();
+  console.log('SHIPPING ORDER (difficulty ascending, with the teaching rooms pinned into easy)');
+  order.forEach((m, i) => {
+    const tier = TIERS[Math.floor(i / TIER_SIZE)];
+    const intro = teaches(m).filter((t) => !seen.has(t));
+    intro.forEach((t) => seen.add(t));
+    console.log(
+      `  ${String(i + 1).padStart(2)}  ${tier.padEnd(7)} ${m.name.padEnd(13)} ` +
+        `score ${m.score.toFixed(1).padStart(5)}  was #${String(m.n).padStart(2)} ${m.tier.padEnd(7)}` +
+        (intro.length ? `  introduces ${intro.join(', ')}` : '')
+    );
+  });
+  console.log('\nNAMES, in order:');
+  console.log(order.map((m) => m.name).join(' '));
+  process.exit(0);
+}
 
 if (process.argv.includes('--csv')) {
   console.log('n,name,tier,par,rotations,seconds,restOnly,forgivingMs,spikes,openEdges,score,rank,shouldBe');

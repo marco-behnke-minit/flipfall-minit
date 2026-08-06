@@ -22,7 +22,7 @@ func _initialize() -> void:
 	var game := load("res://src/game.gd")
 	var attempts := Const.config_spec("attempts")        # default 3, 1..9
 	var start_level := Const.config_spec("startLevel")   # default 1, 1..40
-	var end_level := Const.config_spec("endLevel")       # default 10, 1..40
+	var end_level := Const.config_spec("endLevel")       # default 40, 1..40
 
 	# The two cases the design names explicitly.
 	_check("attempts=99 clamps to the max", game.coerce_config("99", attempts), 9)
@@ -30,7 +30,8 @@ func _initialize() -> void:
 
 	# Absent key: the SDK facade hands back the empty default.
 	_check("attempts absent -> default", game.coerce_config("", attempts), 3)
-	_check("endLevel absent -> default", game.coerce_config("", end_level), 10)
+	# The default drop is the whole room list, not the first tier.
+	_check("endLevel absent -> all forty", game.coerce_config("", end_level), 40)
 
 	# parseInt semantics rather than to_int(): a leading integer wins, junk after
 	# it is ignored, and junk instead of it falls back to the default — never to

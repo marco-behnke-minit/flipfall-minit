@@ -22,7 +22,10 @@ const TOLERANCE = 0.01;
 
 const FIELDS = ['idx', 'name', 'status', 'cause', 'x', 'y', 'vx', 'vy', 'time',
   'rotations', 'buttons', 'impacts', 'impactSum'];
-const DISCRETE = new Set(['idx', 'name', 'status', 'cause', 'rotations', 'buttons', 'impacts']);
+// `idx` is deliberately not compared: this project sorts its rooms by measured
+// difficulty (see src/levels.gd), so the same room sits at a different index in
+// each project. Rooms are matched by name instead.
+const DISCRETE = new Set(['name', 'status', 'cause', 'rotations', 'buttons', 'impacts']);
 
 const run = (cmd, args) =>
   execFileSync(cmd, args, { cwd: project, encoding: 'utf8', maxBuffer: 1 << 24 })
@@ -41,10 +44,18 @@ if (js.length !== 40 || gd.length !== 40) {
 const failures = [];
 const worst = {};
 
+const byName = new Map(gd.map((room) => [room.name, room]));
+for (const missing of js.filter((room) => !byName.has(room.name))) {
+  failures.push(`${missing.name}: present in the JS rooms, absent from src/levels.gd`);
+}
+
 for (let i = 0; i < js.length; i++) {
+  const counterpart = byName.get(js[i].name);
+  if (!counterpart) continue;
   for (const field of FIELDS) {
+    if (field === 'idx') continue;
     const a = js[i][field];
-    const b = gd[i][field];
+    const b = counterpart[field];
     if (DISCRETE.has(field)) {
       if (a !== b) failures.push(`${js[i].name}: ${field} js=${a} gd=${b}`);
     } else {
