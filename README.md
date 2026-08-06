@@ -63,6 +63,12 @@ plain-text labels with no emoji, an animated count-up on value changes, the thre
 feedback variants with their colours and ~1 s timing, and one flying icon per
 point clustered into 125/25/5/1 denominations.
 
+They also use the SDK's real typefaces. `assets/fonts/` holds Lato (HUD) and
+Bowlby One SC (feedback pops), extracted from the woff2 the JS SDK bundles —
+Godot loads woff2 directly — with their SIL OFL licences alongside. This is not
+just cosmetic: panel widths *are* font metrics, and a wider substitute pushed the
+Attempts / Rotations group to within 12 px of the gravity compass.
+
 ## Web export
 
 Per the SDK's Godot article, the preset in `export_presets.cfg` sets **Thread
@@ -147,10 +153,15 @@ apply, rather than having been missed:
 
 ### Known deviations
 
-- **Fonts.** The original picks up the device's `system-ui` at several weights,
-  and the SDK's UI ships bundled Lato and Bowlby One SC as woff2 — a format Godot
-  cannot load. Weights are synthesised from Godot's bundled face with
-  `FontVariation`, so type is close but not identical.
+- **Header side padding is 48, not the 75 in DESIGN.md's layout table.** The
+  compass sits in the dead centre of the bar and the left group is two panels
+  against Score's one, so at 75 the Attempts / Rotations block came within 39 px
+  of the dial while 264 px went unused on the right — it read as crowded on a
+  real device. Padding is the SDK's documented positioning knob, and 48 is the
+  safe-area inset the rest of the layout already uses, so the bar now spans it
+  exactly. Everything else in that table is unchanged.
+- **Body text weights.** Lato ships Regular and Bold only, so the original's
+  `600` and `800` both land on Bold.
 - **Feedback gradient.** The SDK's feedback text is a vertical gradient fill;
   Godot's text drawing has no gradient, so each variant uses its top colour plus
   the dark stroke that carries the read at that size.
@@ -173,6 +184,7 @@ apply, rather than having been missed:
     src/particles.gd    particle pool
     src/audio.gd        synthesised SFX + music
     src/draw_util.gd    rounded rects, arcs, letter-spaced text, fonts
+    assets/fonts/       Lato + Bowlby One SC (SIL OFL), as used by the SDK
     src/ui/             header bar, feedback pops, flying rewards
     addons/minit/       the Minit Games SDK addon
     tools/              verification, capture and packaging

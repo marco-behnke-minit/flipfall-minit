@@ -50,50 +50,69 @@ static func stroke_arc(ci: CanvasItem, centre: Vector2, radius: float, from: flo
 
 ## A soft radial glow, standing in for canvas2d's `shadowBlur`. Cheap enough to
 ## run per-frame: a handful of concentric translucent discs.
-static func glow(ci: CanvasItem, centre: Vector2, radius: float, color: Color, strength: float = 1.0, rings: int = 5) -> void:
+##
+## `blur` is the reach beyond `radius` in pixels, matching shadowBlur's units.
+## It used to be a multiple of the radius, which made the halo scale with the
+## object — on the 118 px rotate buttons that reached 83 px up into the
+## playfield frame. Call sites now pass the same blur the original did.
+static func glow(ci: CanvasItem, centre: Vector2, radius: float, color: Color,
+		blur: float, strength: float = 1.0, rings: int = 5) -> void:
+	if blur <= 0.0 or strength <= 0.0:
+		return
 	for i in range(rings, 0, -1):
 		var t := float(i) / rings
 		var c := color
 		c.a = color.a * strength * 0.10 * (1.0 - t + 0.25)
-		ci.draw_circle(centre, radius * (1.0 + t * 0.75), c)
+		ci.draw_circle(centre, radius + blur * t, c)
 
 
 # --- fonts ------------------------------------------------------------------
 #
-# The original picks up the device's system-ui face at several weights. Godot
-# web builds ship one bundled face, so the weights are synthesised with
-# FontVariation rather than pulling extra font files into the .pck.
+# The real SDK faces, not substitutes: Lato for the HUD and Bowlby One SC for
+# the feedback pops, extracted from the JS SDK's bundled woff2 (both SIL OFL,
+# licences alongside them in assets/fonts). Godot loads woff2 directly.
+#
+# This is not only cosmetic. Panel widths are font metrics, and the layout in
+# DESIGN.md is authored against Lato's — a wider substitute pushed the Attempts /
+# Rotations group to within 12 px of the gravity compass.
+
+const LATO_REGULAR := "res://assets/fonts/Lato-Regular.woff2"
+const LATO_BOLD := "res://assets/fonts/Lato-Bold.woff2"
+const BOWLBY := "res://assets/fonts/BowlbyOneSC-Regular.woff2"
 
 static var _faces: Dictionary = {}
 
 
-static func face(embolden: float = 0.0) -> Font:
-	var key := snappedf(embolden, 0.01)
-	if not _faces.has(key):
-		if is_zero_approx(embolden):
-			_faces[key] = ThemeDB.fallback_font
-		else:
-			var v := FontVariation.new()
-			v.base_font = ThemeDB.fallback_font
-			v.variation_embolden = embolden
-			_faces[key] = v
-	return _faces[key]
+static func _load(path: String) -> Font:
+	if not _faces.has(path):
+		var f := load(path)
+		if f == null:
+			push_warning("[flipfall] missing font %s, falling back" % path)
+			f = ThemeDB.fallback_font
+		_faces[path] = f
+	return _faces[path]
 
 
+## HUD labels and body text.
 static func regular() -> Font:
-	return face(0.0)
+	return _load(LATO_REGULAR)
 
 
+## Lato ships Regular and Bold only, so the in-between weight the original got
+## from `600` is the bold face — closer than emboldening the regular one.
 static func semibold() -> Font:
-	return face(0.35)
+	return _load(LATO_BOLD)
 
 
 static func bold() -> Font:
-	return face(0.6)
+	return _load(LATO_BOLD)
 
 
-static func heavy() -> Font:
-	return face(0.9)
+## Feedback pops only. Bowlby One SC is a heavy small-caps display face, which is
+## what the SDK uses for those and nothing else — the bottom pill's "ROTATE
+## GRAVITY" / "RETRY" are plain bold in the original and stay on Lato.
+static func display() -> Font:
+	return _load(BOWLBY)
 
 
 ## Baseline y for text whose vertical centre should sit at `centre_y` — the

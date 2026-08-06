@@ -67,7 +67,8 @@ func _draw_compass() -> void:
 	# Fixed gravity arrow — down is always down.
 	var s := 1.0 + compass_pulse * 0.16
 	draw_set_transform(o, 0.0, Vector2(s, s))
-	DrawUtil.glow(self, Vector2(0, r - 20), 20.0, Const.C_ORB, 0.6 + compass_pulse * 1.2, 4)
+	DrawUtil.glow(self, Vector2(0, r - 20), 20.0, Const.C_ORB,
+		14.0 + compass_pulse * 20.0, 0.6 + compass_pulse * 1.2, 4)
 	draw_colored_polygon(PackedVector2Array([
 		Vector2(0, r - 8), Vector2(-15, r - 30), Vector2(0, r - 24), Vector2(15, r - 30),
 	]), Const.C_ORB)
@@ -86,7 +87,8 @@ func _draw_rotate_button(clockwise: bool, held: bool) -> void:
 	draw_set_transform(c, 0.0, Vector2(press, press))
 
 	if attention:
-		DrawUtil.glow(self, Vector2.ZERO, Const.ROT_R, Const.C_ORB, (0.5 + glow_t * 0.9) * alpha)
+		DrawUtil.glow(self, Vector2.ZERO, Const.ROT_R, Const.C_ORB,
+			16.0 + glow_t * 26.0, (0.5 + glow_t * 0.9) * alpha)
 
 	var fill := Color("#3B4658") if held else Color("#2A2F3A")
 	fill.a = alpha
@@ -138,7 +140,7 @@ func _draw_pill(mode: String, held: bool) -> void:
 
 	if mode == "hint":
 		var p := (sin(time_ms * 0.004) + 1.0) / 2.0
-		var big := DrawUtil.heavy()
+		var big := DrawUtil.bold()
 		var small := DrawUtil.semibold()
 		var c1 := Const.C_ORB
 		c1.a = 0.55 + p * 0.45
@@ -161,7 +163,7 @@ func _draw_pill(mode: String, held: bool) -> void:
 			g + Vector2(17, -14), g + Vector2(6, -3), g + Vector2(22, 2),
 		]), Const.C_SPIKE)
 
-		var big := DrawUtil.heavy()
+		var big := DrawUtil.bold()
 		DrawUtil.draw_tracked(self, big, 27, Vector2(26, DrawUtil.middle_baseline(big, 27, -9.0)),
 			"RETRY", Const.C_SPIKE, 2.0, 0.5)
 		var small := DrawUtil.semibold()

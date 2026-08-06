@@ -218,7 +218,7 @@ func _dashed_rounded_rect(rect: Rect2, radius: float, color: Color, width: float
 func _draw_exit(o: Vector2) -> void:
 	var centre := o + Vector2(Const.CELL, Const.CELL) / 2.0
 	var p := (sin(time_ms * 0.0035) + 1.0) / 2.0
-	DrawUtil.glow(self, centre, 22.0, Const.C_EXIT, 0.7 + p * 0.5)
+	DrawUtil.glow(self, centre, 22.0, Const.C_EXIT, 22.0 + p * 16.0, 0.7 + p * 0.5)
 	DrawUtil.stroke_arc(self, centre, 22.0, 0.0, TAU, Const.C_EXIT, 5.0)
 	var inner := Const.C_EXIT
 	inner.a = 0.45 + p * 0.35

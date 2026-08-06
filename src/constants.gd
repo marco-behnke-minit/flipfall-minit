@@ -30,7 +30,12 @@ const PILL_SIZE := Vector2(320, 120)
 const COMPASS := Vector2(480, 115)
 const COMPASS_R := 52.0
 const HUD_Y := 60.0
-const HUD_PAD := 75.0
+# DESIGN.md specifies 75, but the compass sits in the dead centre of the bar and
+# the left group is two panels against Score's one, so at 75 the Attempts /
+# Rotations block came within 39 px of the dial while 264 px went unused on the
+# right. Padding is the SDK's documented positioning knob, and 48 is the safe-area
+# inset the rest of the layout already uses, so the bar now spans it exactly.
+const HUD_PAD := 48.0
 
 # Orb / simulation. Tuned so a full-width traverse takes about a second: fast
 # enough to feel momentum, slow enough that mid-flight rotations are a fair ask

@@ -37,7 +37,7 @@ func show_negative(text: String) -> void:
 
 
 func _show(text: String, variant: String) -> void:
-	var font := DrawUtil.heavy()
+	var font := DrawUtil.display()
 	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, SIZE).x
 	_pops.append({
 		"text": text,
@@ -60,7 +60,7 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	var font := DrawUtil.heavy()
+	var font := DrawUtil.display()
 	var centre := Vector2(Const.DESIGN_W / 2.0, Const.DESIGN_H / 2.0)
 
 	for pop in _pops:
