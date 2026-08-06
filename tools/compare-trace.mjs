@@ -1,6 +1,10 @@
-// Prove the GDScript physics port still reproduces the original JavaScript
-// simulation — the one tools/solve.js in the HTML5 project ran to prove every
-// room solvable.
+// Prove src/sim.gd still reproduces the JavaScript physics in tools/reference/ —
+// the implementation tools/solve.mjs runs to prove every room solvable.
+//
+// Two implementations of the same simulation, checked against each other, is the
+// point rather than an accident: the game runs the GDScript one and the verifier
+// runs the JavaScript one, so this is what lets a solver proof mean anything
+// about the shipped build.
 //
 //   node tools/compare-trace.mjs
 //

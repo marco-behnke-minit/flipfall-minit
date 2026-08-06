@@ -1,0 +1,142 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://minit.studio/schemas/meta.schema.json",
+    "title": "Minit game bundle meta.json",
+    "description": "Mirror of MetaJsonSchema (packages/shared/src/zod/MetaJson.zod.ts) + DropConfigSchema (DropConfig.zod.ts). Keep in sync with those files.",
+    "type": "object",
+    "properties": {
+        "title": { "type": "string" },
+        "controls": { "type": "string" },
+        "logic": { "type": "string" },
+        "description": { "type": "string" },
+        "schemaVersion": {
+            "description": "Forward-compat hook. Nothing branches on it today; unknown values stay valid.",
+            "type": ["string", "number"]
+        },
+        "resultSorting": {
+            "description": "Client-only ordering of the game's result list.",
+            "enum": ["highestScore", "lowestScore", "fastestTime", "slowestTime"]
+        },
+        "config": {
+            "description": "Creator-declared tunable values. At least one entry is required to enable Superposting.",
+            "type": "array",
+            "maxItems": 25,
+            "items": { "$ref": "#/$defs/configEntry" }
+        }
+    },
+    "additionalProperties": true,
+    "$defs": {
+        "numberLike": {
+            "anyOf": [
+                { "type": "number" },
+                { "type": "string", "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*$" }
+            ]
+        },
+        "booleanLike": {
+            "anyOf": [{ "type": "boolean" }, { "enum": ["true", "false"] }]
+        },
+        "stringValue": { "type": "string" },
+        "colorValue": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"
+        },
+        "configEntry": {
+            "type": "object",
+            "required": ["key", "valueType"],
+            "properties": {
+                "key": {
+                    "description": "Unique within config, compared after trimming surrounding whitespace.",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "valueType": { "enum": ["string", "number", "boolean", "color"] },
+                "description": {
+                    "description": "Human-readable label. Longer than 100 chars is silently dropped at parse time, not an error.",
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "value": { "type": ["string", "number", "boolean"] },
+                "defaultValue": {
+                    "description": "Alias for value. If both are present, value wins.",
+                    "type": ["string", "number", "boolean"]
+                },
+                "range": {
+                    "description": "Fixed list of allowed values. Mutually exclusive with min/max and minLength/maxLength.",
+                    "type": "array",
+                    "items": { "type": ["string", "number", "boolean"] }
+                },
+                "min": { "type": "number" },
+                "max": { "type": "number" },
+                "minLength": { "type": "integer", "minimum": 0 },
+                "maxLength": { "type": "integer", "minimum": 0 },
+                "moddable": {
+                    "description": "true = open to mods, false = locked, absent = unmarked (treated as open).",
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false,
+            "anyOf": [{ "required": ["value"] }, { "required": ["defaultValue"] }],
+            "allOf": [
+                {
+                    "if": { "required": ["range"] },
+                    "then": {
+                        "properties": {
+                            "min": false,
+                            "max": false,
+                            "minLength": false,
+                            "maxLength": false
+                        }
+                    }
+                },
+                {
+                    "if": { "properties": { "valueType": { "not": { "const": "number" } } } },
+                    "then": { "properties": { "min": false, "max": false } }
+                },
+                {
+                    "if": { "properties": { "valueType": { "not": { "const": "string" } } } },
+                    "then": { "properties": { "minLength": false, "maxLength": false } }
+                },
+                {
+                    "if": { "properties": { "valueType": { "const": "number" } }, "required": ["valueType"] },
+                    "then": {
+                        "properties": {
+                            "value": { "$ref": "#/$defs/numberLike" },
+                            "defaultValue": { "$ref": "#/$defs/numberLike" },
+                            "range": { "items": { "$ref": "#/$defs/numberLike" } }
+                        }
+                    }
+                },
+                {
+                    "if": { "properties": { "valueType": { "const": "boolean" } }, "required": ["valueType"] },
+                    "then": {
+                        "properties": {
+                            "value": { "$ref": "#/$defs/booleanLike" },
+                            "defaultValue": { "$ref": "#/$defs/booleanLike" },
+                            "range": { "items": { "$ref": "#/$defs/booleanLike" } }
+                        }
+                    }
+                },
+                {
+                    "if": { "properties": { "valueType": { "const": "string" } }, "required": ["valueType"] },
+                    "then": {
+                        "properties": {
+                            "value": { "$ref": "#/$defs/stringValue" },
+                            "defaultValue": { "$ref": "#/$defs/stringValue" },
+                            "range": { "items": { "$ref": "#/$defs/stringValue" } }
+                        }
+                    }
+                },
+                {
+                    "if": { "properties": { "valueType": { "const": "color" } }, "required": ["valueType"] },
+                    "then": {
+                        "properties": {
+                            "value": { "$ref": "#/$defs/colorValue" },
+                            "defaultValue": { "$ref": "#/$defs/colorValue" },
+                            "range": { "items": { "$ref": "#/$defs/colorValue" } }
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

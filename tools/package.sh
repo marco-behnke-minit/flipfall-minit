@@ -31,14 +31,12 @@ fi
 # reach an upload.
 echo "==> verifying"
 node tools/check-meta.mjs
+node tools/test-schema.mjs >/dev/null
 "$GODOT" --headless --script res://tools/test_score.gd >/dev/null
 "$GODOT" --headless --script res://tools/test_config.gd >/dev/null
-echo "scoring and config checks passed"
-if [ -d ../flipfall ]; then
-  node tools/compare-trace.mjs | tail -1
-else
-  echo "skipping physics comparison — ../flipfall not present" >&2
-fi
+echo "scoring, config and schema checks passed"
+node tools/solve.mjs | tail -1
+node tools/compare-trace.mjs | tail -1
 
 rm -rf "$OUT" "$ZIP"
 mkdir -p "$OUT"

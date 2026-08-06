@@ -9,40 +9,16 @@
 // about how much of the room kills you for missing it. Those are independent
 // axes, and a tier list sorted on one of them can flatten while looking fine.
 //
-// Rooms come from src/levels.gd — this project is the source of truth for them.
-// The solved routes come from .levelcache.json, which `npm run solve` fills in
-// the sibling HTML5 project, where the solver lives. That cache is keyed by a
-// hash of each room's own map, so it stays valid however the rooms are ordered
-// here, and only goes stale if a map is actually edited.
+// Rooms come from src/levels.gd, the source of truth. Solved routes come from
+// .levelcache.json, which tools/solve.mjs fills — keyed by a hash of each room's
+// own map, so it survives reordering and only goes stale if a map is edited.
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-const GRID = 13;
-const TIERS = ['easy', 'medium', 'hard', 'insane'];
-const TIER_SIZE = 10;
-const tierOf = (i) => TIERS[Math.floor(i / TIER_SIZE)];
-
-/** Read the room table straight out of the GDScript. */
-function loadLevels() {
-  const src = readFileSync(new URL('../src/levels.gd', import.meta.url), 'utf8');
-  const levels = [];
-  const re = /\{"name": "([^"]+)", "par": (\d+), "map": \[([\s\S]*?)\]\}/g;
-  for (const m of src.matchAll(re)) {
-    levels.push({
-      name: m[1],
-      par: Number(m[2]),
-      map: [...m[3].matchAll(/"([^"]*)"/g)].map((r) => r[1]),
-    });
-  }
-  if (levels.length !== TIERS.length * TIER_SIZE) {
-    throw new Error(`parsed ${levels.length} rooms from src/levels.gd, expected ${TIERS.length * TIER_SIZE}`);
-  }
-  return levels;
-}
+import { loadLevels, GRID, TIERS, TIER_SIZE, tierOf } from './lib/levels.mjs';
 
 const LEVELS = loadLevels();
-const cachePath = new URL('../../flipfall/.levelcache.json', import.meta.url);
-const cache = JSON.parse(readFileSync(cachePath, 'utf8'));
+const cache = JSON.parse(readFileSync(new URL('../.levelcache.json', import.meta.url), 'utf8'));
 const roomHash = (level) =>
   createHash('sha256').update(level.map.join('|')).digest('hex').slice(0, 16);
 
@@ -133,10 +109,10 @@ ranked.forEach((m, i) => {
 // --- the shipping order -----------------------------------------------------
 //
 // Sorting purely by difficulty is not quite right, because the easy tier has a
-// second job: it is the DEFAULT published segment (startLevel 1, endLevel 10),
-// and it is where each element is taught. A pure sort moves both sticky rooms
-// into medium, so the default drop would never show a mechanic its own store
-// description promises.
+// second job: it is where each element is taught, and it is the segment a drop
+// publishes when it wants the gentlest band. A pure sort moves both sticky rooms
+// into medium, so that band would never show a mechanic the store description
+// promises.
 //
 // So: the cheapest room introducing each element is pinned into easy, and
 // everything else falls into place by measured difficulty. Within every tier the

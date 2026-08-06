@@ -4,16 +4,32 @@
 // different rules is a bug that would only surface in production, so this fails
 // the build if the two ever disagree on a key, type, default or bound.
 //
+// Two layers, as the design document specifies: the JSON Schema mirror of the
+// console's own source, then the cross-field and cross-file rules a schema
+// cannot express.
+//
 //   node tools/check-meta.mjs
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { validate } from './lib/jsonschema.mjs';
 
 const project = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const meta = JSON.parse(readFileSync(resolve(project, 'meta.json'), 'utf8'));
 const gd = readFileSync(resolve(project, 'src/constants.gd'), 'utf8');
 
 const errors = [];
+
+// Layer 1 — schema. meta.schema.json mirrors the Creator Console's Zod source
+// and is authoritative on shape, types and field names. It rejects unknown
+// fields inside a config entry, so a typo'd `moddible` fails here rather than
+// being silently ignored on upload.
+const schema = JSON.parse(readFileSync(resolve(project, 'meta.schema.json'), 'utf8'));
+errors.push(...validate(meta, schema).map((e) => `schema: ${e}`));
+
+// Layer 2 — semantics. The cross-field and cross-file rules JSON Schema cannot
+// express: keys unique after trimming, a value inside its own bounds, and
+// agreement with CONFIG in src/constants.gd.
 
 // Pull the CONFIG entries straight out of the GDScript so there is no second
 // copy of the numbers to drift.
@@ -82,4 +98,4 @@ if (errors.length) {
   for (const e of errors) console.error('  ' + e);
   process.exit(1);
 }
-console.log(`meta.json agrees with src/constants.gd on all ${gdConfig.length} config keys.`);
+console.log(`meta.json matches meta.schema.json and agrees with src/constants.gd on all ${gdConfig.length} config keys.`);

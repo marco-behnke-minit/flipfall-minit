@@ -7,22 +7,10 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-const GRID = 13;
-const TIERS = ['easy', 'medium', 'hard', 'insane'];
-const TIER_SIZE = 10;
-const tierOf = (i) => TIERS[Math.floor(i / TIER_SIZE)];
-
-function loadLevels() {
-  const src = readFileSync(new URL('../src/levels.gd', import.meta.url), 'utf8');
-  return [...src.matchAll(/\{"name": "([^"]+)", "par": (\d+), "map": \[([\s\S]*?)\]\}/g)].map((m) => ({
-    name: m[1],
-    par: Number(m[2]),
-    map: [...m[3].matchAll(/"([^"]*)"/g)].map((r) => r[1]),
-  }));
-}
+import { loadLevels, GRID, TIERS, TIER_SIZE, tierOf } from './lib/levels.mjs';
 
 const LEVELS = loadLevels();
-const cache = JSON.parse(readFileSync(new URL('../../flipfall/.levelcache.json', import.meta.url), 'utf8'));
+const cache = JSON.parse(readFileSync(new URL('../.levelcache.json', import.meta.url), 'utf8'));
 const solved = (l) => cache.rooms[createHash('sha256').update(l.map.join('|')).digest('hex').slice(0, 16)];
 
 const at = (l, c, r) => (c < 0 || r < 0 || c >= GRID || r >= GRID ? null : l.map[r][c]);

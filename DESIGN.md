@@ -135,7 +135,7 @@ can ever fail before the player has read it, and reading time is free.
 Measured by `tools/run-sim.js`, which plays the segment with the real physics
 and the real scoring module.
 
-The default drop is all forty rooms (`npm run sim -- <think> 1 40`):
+The default drop is all forty rooms (`node tools/run-sim.mjs <think> 1 40`):
 
 | Play style              | Active play | Final score |
 | ----------------------- | ----------- | ----------- |
@@ -145,7 +145,7 @@ The default drop is all forty rooms (`npm run sim -- <think> 1 40`):
 That is a long session for a Minit — the two-to-five-minute target belongs to a
 single ten-room tier, which a drop can still publish on its own.
 
-Rooms 1–10 (`npm run sim -- 15 1 10`):
+Rooms 1–10 (`node tools/run-sim.mjs 15 1 10`):
 
 | Play style              | Active play | Final score |
 | ----------------------- | ----------- | ----------- |
@@ -447,17 +447,27 @@ canvas is overscanned 5% per side so an edge crop never reveals a gap.
 
 # Verification
 
-Levels are not hand-checked — they are proved by running the shipped
+Levels are not hand-checked — they are proved by running the reference
 physics under Node.
 
-    npm run solve            verify every room is solvable, print par
-    npm run solve:force      re-search everything, ignoring the cache
-    node tools/solve.js 7    print room 7's solutions step by step
-    npm run sim 8            simulate a full run, 8s thinking per room
-    npm run check-meta       validate meta.json against the console schema
-    npm run zip              verify + build + package the upload ZIP
+    node tools/solve.mjs             verify every room is solvable, print par
+    node tools/solve.mjs --force     re-search everything, ignoring the cache
+    node tools/solve.mjs --fix-par   rewrite par from what the solver found
+    node tools/solve.mjs 7           print room 7's solutions step by step
+    node tools/run-sim.mjs 8         simulate a full run, 8s thinking per room
+    node tools/check-meta.mjs        validate meta.json (schema + semantic)
+    node tools/compare-trace.mjs     prove src/sim.gd matches the reference
+    tools/package.sh                 verify + build + package the upload ZIP
 
-`tools/solve.js` runs two searches per room:
+The game runs a GDScript simulation (`src/sim.gd`) and the verifier runs a
+JavaScript one (`tools/reference/physics.js`). That is deliberate rather than
+accidental: `tools/compare-trace.mjs` drives both over the same rotation
+schedule and requires identical outcomes on all forty rooms, which is what lets
+a solver proof say anything about the shipped build. Rooms themselves live in
+`src/levels.gd`, and the JavaScript tooling reads them from there, so there is
+only ever one copy of a map.
+
+`tools/solve.mjs` runs two searches per room:
 
 -   **rest-only** — rotations only while the orb is settled, so the
     player never has to hit a timing window. Its length becomes `par`.
@@ -499,7 +509,7 @@ remove.
 ## Result cache
 
 Searching forty rooms takes 4m 24s, which is far too slow to sit in front of
-every `npm run zip`. Results are cached in `.levelcache.json` (gitignored),
+every package run. Results are cached in `.levelcache.json` (gitignored),
 keyed by a hash of **each room's own map**, plus a hash of everything else
 that could change the answer: `physics.js`, `constants.js` and `search.js`.
 
@@ -512,15 +522,15 @@ worse than no cache:
 | room renamed or reordered       | full cache hit                |
 | physics, constants or search    | entire cache discarded, announced |
 
-Freshly searched rooms are marked `+`. Warm, `npm run zip` is **0.8 s**
-rather than 4m 24s. `npm run solve:force` ignores the cache.
+Freshly searched rooms are marked `+`. Warm, verification is under a second
+rather than minutes. `node tools/solve.mjs --force` ignores the cache.
 
 The cache is gitignored, so a fresh clone pays the 264 s once. Committing it
 would make clones instant at the cost of churn on every level edit.
 
 ## `par` comes from the solver
 
-`npm run solve -- --fix-par` rewrites `par` in `src/levels.js` from the route
+`node tools/solve.mjs --fix-par` rewrites `par` in `src/levels.gd` from the route
 the solver actually found. Par was originally guessed while authoring and was
 wrong on 19 of 40 rooms.
 
@@ -560,21 +570,22 @@ played.
 -   **Schema** — `meta.schema.json`, the mirror of the console's Zod
     source. Authoritative on shape, types and field names, and it rejects
     unknown fields, so a typo'd `moddible` fails rather than being
-    silently ignored.
+    silently ignored. Checked by a small validator in `tools/lib/`, which
+    `tools/test-schema.mjs` proves rejects what it claims to.
 -   **Semantic** — the cross-field and cross-file rules JSON Schema cannot
     express: keys unique *after trimming*, a value actually inside its own
-    range or bounds, and agreement with `CONFIG` in `src/constants.js`.
+    range or bounds, and agreement with `CONFIG` in `src/constants.gd`.
 
-`CONFIG` is the single source of truth: the game reads and clamps through
-it, and the build fails if it and `meta.json` disagree on any key, type,
-default or bound — a wizard and a runtime enforcing different rules is a
+`CONFIG` in `src/constants.gd` is the single source of truth: the game reads
+and clamps through it, and the build fails if it and `meta.json` disagree on any
+key, type, default or bound — a wizard and a runtime enforcing different rules is a
 bug that would only surface in production.
 
 Values arrive as strings or `undefined`, so every read is coerced and
 clamped: `attempts=99` becomes 9, `startLevel=abc` becomes room 1.
 
 **Nothing that affects physics is configurable.** Gravity, friction and
-max speed are what `tools/solve.js` proved the rooms solvable at; exposing
+max speed are what `tools/solve.mjs` proved the rooms solvable at; exposing
 them would invalidate every proof.
 
 `resultSorting` is `highestScore` — Flipfall's score is higher-is-better.
@@ -583,39 +594,52 @@ them would invalidate every proof.
 
 # Project Layout
 
-    src/constants.js     design surface, layout, tuning, tiers, CONFIG
-    src/levels.js        the forty rooms + an authoring validator
-    src/physics.js       orb simulation (DOM-free, shared with the solver)
-    src/score.js         scoring + flavor text (pure, unit-verifiable)
-    src/scale.js         the only place the viewport is read
-    src/render.js        all drawing
-    src/particles.js     particle pool
-    src/audio.js         synthesised SFX + the music routes
-    src/main.js          state machine, input, SDK lifecycle
-    public/meta.json     Creator Console metadata + config declaration
-    public/audio/        the music track, copied verbatim to the ZIP root
+    src/constants.gd     design surface, layout, tuning, tiers, CONFIG
+    src/levels.gd        the forty rooms, difficulty-sorted, + a validator
+    src/sim.gd           orb simulation (node-free, verified against reference)
+    src/score.gd         scoring + flavor text (pure, unit-verifiable)
+    src/game.gd          state machine, input, SDK lifecycle
+    src/background.gd    the only place the live viewport is read
+    src/room_view.gd     the room and orb, inside the tumble transform
+    src/compass.gd       gravity compass (top band)
+    src/controls.gd      rotate buttons and pill (bottom band)
+    src/fade.gd          full-viewport transition fade
+    src/warmup.gd        glyph + pipeline warm-up, before loading_done()
+    src/particles.gd     particle pool
+    src/audio.gd         synthesised SFX + the music track
+    src/draw_util.gd     rounded rects, arcs, tracked text, fonts
+    src/ui/              header bar, feedback pops, flying rewards
+    addons/minit/        the Minit Games SDK addon
+    assets/              the music track and the SDK's fonts
+    meta.json            Creator Console metadata + config declaration
     meta.schema.json     JSON Schema mirror of the console's Zod source
-    tools/search.js      shared level-solving search
-    tools/solve.js       level verifier + result cache
-    tools/run-sim.js     whole-run simulation
-    tools/check-meta.js  meta.json + config validator (schema + semantic)
-    tools/zip.js         upload packaging + pre-flight checks
-    vite.config.js       single-file inlining, dotfile stripping
+
+    tools/reference/     the JavaScript physics, scoring and search the
+                         verifier runs — the implementation src/sim.gd was
+                         ported from and is checked against
+    tools/lib/           levels.gd parser, JSON Schema validator
+    tools/solve.mjs      level verifier + result cache
+    tools/run-sim.mjs    whole-run simulation
+    tools/difficulty.mjs difficulty ranking, and the shipping order
+    tools/mechanics.mjs  mechanic coverage, and what nothing uses
+    tools/check-meta.mjs meta.json + config validator (schema + semantic)
+    tools/compare-trace.mjs  src/sim.gd vs the reference physics
+    tools/package.sh     upload packaging + pre-flight checks
 
 ## Packaging
 
-`npm run zip` verifies, builds, runs pre-flight checks and produces the
-upload archive:
+`tools/package.sh` verifies, builds, runs pre-flight checks and produces the
+upload archive — roughly 15 MB, dominated by the Godot engine's WebAssembly
+binary, with the music inside the `.pck`:
 
-    index.html      123 KB    everything inlined — no JS/CSS side files
-    audio/loop.mp3  4990 KB
+    index.html        5 KB    the Godot web shell
+    index.wasm       39 MB    the engine (~10 MB over the wire, compressed)
+    index.pck         5 MB    scenes, scripts, music, fonts
     meta.json         3 KB
 
-`index.html` and `meta.json` sit at the ZIP root, audio alongside. The
-pre-flight refuses to package a build with `src/`, a `vite.config.*`, a
-`package.json`, an external URL, a dotfile, or a `meta.json` that would be
-rejected. Vite copies `public/` verbatim *including dotfiles*, so the build
-strips them — a `.gitkeep` shipped inside an upload before that existed.
+`index.html` and `meta.json` sit at the ZIP root. The pre-flight refuses to
+package an archive missing either of those, or one that still contains project
+files or dotfiles.
 
 ------------------------------------------------------------------------
 

@@ -1,4 +1,4 @@
-// Reference trace, produced by the ORIGINAL JavaScript physics.
+// Reference trace, produced by the JavaScript physics in tools/reference/.
 //
 // Run the same scripted rotation schedule through every room and print the
 // resulting state. tools/trace.gd prints the identical format from the GDScript
@@ -6,9 +6,11 @@
 // reproduces the simulation the rooms were proven solvable against.
 //
 //   node tools/trace_js.mjs > /tmp/trace-js.txt
-import { LEVELS } from '../../flipfall/src/levels.js';
-import { createWorld, stepWorld, rotate } from '../../flipfall/src/physics.js';
-import { SUBSTEP } from '../../flipfall/src/constants.js';
+import { loadLevels } from './lib/levels.mjs';
+import { createWorld, stepWorld, rotate } from './reference/physics.js';
+import { SUBSTEP } from './reference/constants.js';
+
+const LEVELS = loadLevels();
 
 // Deliberately awkward: rotations land mid-flight, not at rest, so the schedule
 // exercises the collision and friction paths rather than settling between moves.

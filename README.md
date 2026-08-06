@@ -1,21 +1,28 @@
 # Flipfall — Godot 🔄🔵
 
-A Godot 4 port of the HTML5 [Flipfall](../flipfall), a momentum-based gravity
-puzzle for portrait mobile, built on the Minit Games SDK.
+A momentum-based gravity puzzle for portrait mobile, built in Godot 4 on the
+Minit Games SDK. Ported from an HTML5 original, which it now supersedes.
 
 The game itself is unchanged: rotate gravity in 90° increments to guide a rolling
 orb through handcrafted rooms; the room tumbles beneath a fixed gravity so
-falling always reads as screen-down. `../flipfall/DESIGN.md` remains the design
-document — this README only covers what the port does differently.
+falling always reads as screen-down. `DESIGN.md` is the design document; this
+README covers how the project is built and verified.
+
+It is self-contained: the JavaScript physics, scoring and level-solving search
+the verifier runs live in `tools/reference/`, copied from the HTML5 project that
+this one replaces.
 
 ## Running
 
 ```bash
 godot --path .                                   # play it
-node tools/compare-trace.mjs                     # physics == the original's
+node tools/solve.mjs                             # every room solvable + par
+node tools/run-sim.mjs 8                         # simulate a run, 8s/room
+node tools/compare-trace.mjs                     # src/sim.gd == the reference
 godot --headless --script res://tools/test_score.gd    # scoring + flavor text
 godot --headless --script res://tools/test_config.gd  # config coercion + clamping
-node tools/check-meta.mjs                        # meta.json == src/constants.gd
+node tools/check-meta.mjs                        # meta.json: schema + semantic
+node tools/test-schema.mjs                       # the schema validator itself
 node tools/difficulty.mjs                        # rank rooms vs their tier
 node tools/difficulty.mjs --order                # the shipping order it implies
 godot --script res://tools/gallery.gd --resolution 960x1480   # one still per room
@@ -230,28 +237,34 @@ the original synthesised them in WebAudio — including an RBJ band-pass standin
 in for the `BiquadFilterNode`. The music track is the one real audio asset and,
 as before, is deliberately left playing under the host's result screen.
 
-### What DESIGN.md describes that is not in this repo
+### Two simulations, on purpose
 
-Three things the design document specifies deliberately live elsewhere or do not
-apply, rather than having been missed:
+The game runs `src/sim.gd`. The verifier runs `tools/reference/physics.js`. That
+is not duplication left over from the port — it is what makes the proofs mean
+something:
 
-- **The solver (`npm run solve`, `tools/search.js`, `.levelcache.json`).** Not
-  ported. Its output is still what backs this build: `par` values come from it,
-  `tools/difficulty.mjs` ranks the rooms from its cache, and
-  `tools/compare-trace.mjs` shows this simulation is the one it searched, so the
-  proofs transfer. The rooms themselves are owned here now — including their
-  order — but the *maps* are shared with `../flipfall`, and the cache is keyed by
-  a hash of each map. So reordering rooms here is free, while **editing a map
-  means syncing it to `../flipfall` and re-running the solver**, since nothing
-  here can prove a room solvable.
-- **The `meta.schema.json` layer of `check-meta`.** `meta.json` is byte-identical
-  to `../flipfall/public/meta.json`, which is schema-validated there, so this
-  repo's `tools/check-meta.mjs` implements only the semantic layer — the
-  cross-field and cross-file rules, including agreement with `src/constants.gd`.
+- `tools/solve.mjs` proves every room solvable, using the reference physics and
+  the search that was written against it.
+- `tools/compare-trace.mjs` proves `src/sim.gd` *is* that simulation, on all
+  forty rooms.
+
+Together they say the shipped build can clear every room. Either alone says
+nothing. It is also a differential test — a mistake in one implementation has to
+be mirrored exactly in the other to go unnoticed.
+
+Rooms live only in `src/levels.gd`; the JavaScript tooling parses them from
+there (`tools/lib/levels.mjs`), so there is never a second copy of a map to
+drift. Editing a map invalidates only that room's cache entry; editing the
+reference engine invalidates all forty.
+
+### What DESIGN.md describes that does not apply here
+
 - **The music "volume routes" (`element` / `webaudio` / `fixed`).** Those exist
   to work around a tainted `MediaElementSource` and a read-only `el.volume` on
   iOS. Godot plays the stream through its own mixer, where `volume_db` is always
   writable, so there is one route and `duck_music()` just tweens it.
+- **Vite, `public/`, and single-file inlining.** Godot's exporter produces the
+  web build; `tools/package.sh` adds `meta.json` and runs the pre-flight.
 
 ### Known deviations
 
@@ -288,6 +301,8 @@ apply, rather than having been missed:
     src/particles.gd    particle pool
     src/audio.gd        synthesised SFX + music
     src/warmup.gd       glyph + pipeline warm-up, before loading_done()
+    tools/reference/    the JS physics, scoring and search the verifier runs
+    tools/lib/          levels.gd parser, JSON Schema validator
     src/draw_util.gd    rounded rects, arcs, letter-spaced text, fonts
     assets/fonts/       Lato + Bowlby One SC (SIL OFL), as used by the SDK
     src/ui/             header bar, feedback pops, flying rewards
