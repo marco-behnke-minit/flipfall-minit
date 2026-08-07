@@ -8,6 +8,7 @@ extends Node
 ## The music track is the one real audio asset, and it is deliberately left
 ## playing under the host's result screen rather than cutting to silence.
 
+const MUSIC_PATH := "res://assets/audio/loop.mp3"
 const MIX_RATE := 44100
 const MASTER := 0.34         # the WebAudio master gain
 const MUSIC_LEVEL := 0.3
@@ -57,13 +58,17 @@ func _ready() -> void:
 
 	_music = AudioStreamPlayer.new()
 	add_child(_music)
-	var stream := load("res://assets/audio/loop.mp3")
+	# The track is the one real audio asset and is deliberately optional — see
+	# assets/audio/README.md. Ask before loading, so a build without it reports a
+	# warning rather than an engine "resource not found" error that reads like a
+	# bug; everything else is synthesised above and is unaffected.
+	var stream: Resource = ResourceLoader.load(MUSIC_PATH) if ResourceLoader.exists(MUSIC_PATH) else null
 	if stream is AudioStreamMP3:
 		stream.loop = true
 		_music.stream = stream
 		_music.volume_db = linear_to_db(0.0001)
 	else:
-		push_warning("[flipfall] music failed to load")
+		push_warning("[flipfall] no music track at %s — running without it" % MUSIC_PATH)
 
 
 # --- playback ---------------------------------------------------------------
