@@ -2,27 +2,32 @@ class_name Prototypes
 extends RefCounted
 ## Scratch rooms for design work. NOT shipped — src/levels.gd is the game.
 ##
-## Play them with:
-##
 ##     godot --path . -- --rooms=prototypes --attempts=9
 ##
-## They exist because the shipped set has no difficulty in it: 32 of its 40 rooms
-## are rest-only solvable, so the orb can be left to settle before every flip and
-## nothing can be failed through execution. Each room here is built to fail that
-## test — the solver confirms none has a rest-only route — and they are ordered
-## so the last three are deliberately too tight, to feel the difference against
-## the first three rather than to be enjoyed.
+## This file is the source of truth for them: tools/prototypes.mjs reads these
+## maps rather than keeping its own copy, so what is measured is what is played.
 ##
-## `par` is the forgiving route's rotation count, as tools/solve.mjs reports it.
-## The window in each comment is the tightest wait on that route: the design
-## document's bar is 250ms for easy, 200 medium, 120 hard, 60 insane.
+## They exist because the shipped set has no difficulty in it — 32 of its 40
+## rooms are rest-only solvable, so the orb can be left to settle before every
+## flip and nothing can be failed through execution.
 ##
-## Keep in step with tools/prototypes.mjs, which is what measures them.
+## WHAT PLAYTESTING SAID, which overturned the metric that produced them:
+##
+##   - Lethality is the difficulty axis, not the timing window. The rooms with
+##     spikes played as hard and insane; the rooms where a mistake only cost a
+##     retry played as "not hard, just annoying". So every room here now has a
+##     way to die.
+##   - A room the solver scored at 0ms — supposedly frame-perfect — was beaten
+##     on the first attempt once its neighbour had taught the move, and was
+##     liked for exactly that. Both Overhead searches hit the node cap, so their
+##     windows are lower bounds, and "0ms" did not mean unfair.
+##   - Rooms that differ only in floor material read as the same room. Ice has
+##     to visibly change what happens, not just widen a number.
 
 const ALL := [
-	# 275ms. Build speed on the ice, then flip down EARLY: arrive slow and you
-	# drop into the hole, arrive fast and you skim straight over it into the
-	# spikes. The opposite of the usual instinct.
+	# VALIDATED as hard. Build speed on the ice, then flip down EARLY: arrive
+	# slow and you drop into the hole, arrive fast and you skim over it into the
+	# spikes. Playtest: "hard because of the spikes behind the ice."
 	{"name": "Skim", "par": 4, "map": [
 		"#############",
 		"#...........#",
@@ -38,12 +43,14 @@ const ALL := [
 		"#.....E.....#",
 		"#############",
 	]},
-	# 200ms. The exit is BELOW the start, down a one-cell shaft — the ladder
-	# shape every shipped room is built on, inverted.
+	# The exit is BELOW the start, down a one-cell shaft — the ladder shape every
+	# shipped room is built on, inverted. Playtest of the first version, which
+	# had no hazard: "not hard, just annoying, you can't die." So overshooting
+	# the shaft now runs into spikes.
 	{"name": "Well", "par": 5, "map": [
 		"#############",
 		"#O..........#",
-		"#IIIIIIII.II#",
+		"#IIIIIIII.^^#",
 		"#########.###",
 		"#########.###",
 		"#########.###",
@@ -55,10 +62,12 @@ const ALL := [
 		"#...........#",
 		"#############",
 	]},
-	# 275ms. The button sits directly on its own door, so touching it removes the
-	# floor underneath. The ice either side is what makes it fair: the orb slides
-	# into the hole instead of having to arrive on it.
-	{"name": "Trapdoor", "par": 4, "map": [
+	# The button sits directly on its own door, so touching it removes the floor
+	# underneath. Dropping through used to BE the win, which is why it played as
+	# a re-skin of Skim; now the drop is the start of the problem. You fall with
+	# whatever speed the ice gave you and have to carry enough of it rightward to
+	# clear the spikes below.
+	{"name": "Trapdoor", "par": 5, "map": [
 		"#############",
 		"#...........#",
 		"#...........#",
@@ -70,16 +79,14 @@ const ALL := [
 		"#IIIIIaIIIII#",
 		"#...........#",
 		"#...........#",
-		"#.....E.....#",
+		"#^^^^^^^E...#",
 		"#############",
 	]},
-
-	# --- below here the rooms are too tight to ship, kept for comparison ---
-
-	# 25ms. The same trapdoor on stone instead of ice. One tile changed, and the
-	# window collapses by a factor of eleven — this is the room that shows what
-	# ice is actually for.
-	{"name": "Trapdoor (stone)", "par": 4, "map": [
+	# The same room on stone. Friction eats the speed, so the drop goes nearly
+	# straight down into the spikes. The point is to make ice visibly
+	# load-bearing rather than a number in a report — the previous pair differed
+	# by 11x in measured window and read as identical in play.
+	{"name": "Trapdoor (stone)", "par": 5, "map": [
 		"#############",
 		"#...........#",
 		"#...........#",
@@ -88,15 +95,15 @@ const ALL := [
 		"#...........#",
 		"#...........#",
 		"#.....1.....#",
-		"#####a#######",
+		"######a######",
 		"#...........#",
 		"#...........#",
-		"#.....E.....#",
+		"#^^^^^^^E...#",
 		"#############",
 	]},
-	# 50ms. A spiked ceiling with a two-cell safe column: the reflex flip-up at a
-	# wall is fatal, so the climb has to be committed mid-flight. Still under the
-	# 60ms bar even insane sets.
+	# VALIDATED as insane. A spiked ceiling with a two-cell safe column, so the
+	# reflex flip-up at a wall is fatal and the climb has to be committed
+	# mid-flight. Playtest: "insane, not unfair — took approx 8 attempts."
 	{"name": "Overhead", "par": 5, "map": [
 		"#############",
 		"#E..........#",
@@ -112,9 +119,11 @@ const ALL := [
 		"#O.........1#",
 		"#############",
 	]},
-	# 0ms. The same again with a one-cell column. Included to show that a
-	# vertical flip has no equivalent of ice to widen it, which is why this
-	# primitive looks unfair rather than hard.
+	# VALIDATED, and the most interesting result. The same again with a one-cell
+	# column, which the solver scored at 0ms. Playtest: one attempt, because
+	# Overhead had already taught the move — "which is nice since you can apply
+	# something learned". A room is not hard or easy on its own; it is hard or
+	# easy given what the room before it taught.
 	{"name": "Overhead (narrow)", "par": 5, "map": [
 		"#############",
 		"#E..........#",

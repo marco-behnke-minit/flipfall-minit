@@ -14,7 +14,16 @@ const LEVELS_GD = new URL('../../src/levels.gd', import.meta.url);
 const ENTRY = /\{"name": "([^"]+)", "par": (\d+), "map": \[([\s\S]*?)\]\}/g;
 
 export function loadLevels() {
-  const src = readFileSync(LEVELS_GD, 'utf8');
+  return loadLevelsFrom(LEVELS_GD);
+}
+
+/**
+ * Read a room table out of any GDScript file in the same shape. The scratch
+ * rooms in src/prototypes.gd are read this way, so the set that is measured and
+ * the set that is played cannot drift apart — they are the same file.
+ */
+export function loadLevelsFrom(url) {
+  const src = readFileSync(url, 'utf8');
   const levels = [...src.matchAll(ENTRY)].map((m) => ({
     name: m[1],
     par: Number(m[2]),

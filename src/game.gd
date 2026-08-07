@@ -47,6 +47,7 @@ var _panel_score := 0
 
 # --- run state --------------------------------------------------------------
 var _rooms: Array = Levels.ALL
+var _session := SessionLog.new()
 var _level_index := 0
 var _attempts := 3
 var _score := 0
@@ -104,6 +105,11 @@ func _ready() -> void:
 	_attempts = _start_attempts
 	_stats = Score.empty_stats()
 
+	# Playtest evidence, written locally only — see src/session_log.gd.
+	_session.begin(
+		"prototypes" if _rooms != Levels.ALL else "shipped",
+		{"attempts": _start_attempts, "startLevel": _start_level + 1, "endLevel": _end_level + 1})
+
 	# Say so when running with local overrides, so a test run cannot be mistaken
 	# for the shipped defaults.
 	for spec in Const.CONFIG:
@@ -120,6 +126,8 @@ func _ready() -> void:
 	_snap_tumble(_world.gravity)
 	_room.world = _world
 	_push_level_label()
+	_session.room_started(_start_level, String(_rooms[_start_level]["name"]),
+		int(_rooms[_start_level]["par"]))
 
 	get_viewport().size_changed.connect(_layout)
 	_layout()
@@ -283,6 +291,7 @@ func _arm_level(index: int) -> void:
 	_phase_t = 0.0
 	_header.set_value(_panel_rotations, "0 / %d" % _rooms[index]["par"])
 	_push_level_label()
+	_session.room_started(index, String(_rooms[index]["name"]), int(_rooms[index]["par"]))
 
 
 func _push_level_label() -> void:
@@ -358,6 +367,7 @@ func _do_retry() -> void:
 	if _phase == "armed" and _world.rotations == 0:
 		return  # nothing to retry yet
 	_stats["retries"] = int(_stats["retries"]) + 1
+	_session.attempt_ended("retry", _world.rotations, _world.time)
 	_audio.retry()
 	_feedback.show_negative("Retry")
 	_lose_attempt("retry")
@@ -385,6 +395,7 @@ func _on_level_clear() -> void:
 	_levels_cleared += 1
 	Score.record_clear(_stats, level, _world.rotations, _world.time)
 
+	_session.attempt_ended("clear", _world.rotations, _world.time)
 	_audio.clear()
 	_audio.duck_music(0.8)
 	_feedback.show_positive("Fast Clear!" if bonus >= 140 else "Level Clear!")
@@ -415,6 +426,7 @@ func _on_death(cause: String) -> void:
 	else:
 		_stats["out_deaths"] = int(_stats["out_deaths"]) + 1
 		_feedback.show_negative("Fell Out!")
+	_session.attempt_ended(cause, _world.rotations, _world.time)
 	_audio.death(cause)
 	_audio.duck_music(0.9)
 	_particles.burst(_orb_screen(), Const.C_ORB, 30, 500.0)
@@ -440,10 +452,11 @@ func _end_run() -> void:
 	_score = total
 	_header.set_value(_panel_score, total, true)
 
+	var flavor := Score.flavor_text(_stats, _levels_cleared, _segment_size)
+	_session.run_ended(total, _levels_cleared, _attempts, flavor)
+
 	# Nothing may be scheduled after this: the host takes focus immediately.
-	Minit.report_result(total, {
-		"flavor_text": Score.flavor_text(_stats, _levels_cleared, _segment_size),
-	})
+	Minit.report_result(total, {"flavor_text": flavor})
 
 
 # --- loop -------------------------------------------------------------------

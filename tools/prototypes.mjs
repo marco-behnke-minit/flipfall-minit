@@ -1,27 +1,36 @@
 // Candidate rooms, run through the same solver the shipped set is verified with.
 //
-//   node tools/prototypes.mjs
+//   node tools/prototypes.mjs           measure them all
+//   node tools/prototypes.mjs Skim      one room's route, flip by flip
 //
-// These are not in src/levels.gd and do not ship. The point is to test design
-// ideas cheaply: the shipped rooms are too easy mainly because 32 of 40 are
-// rest-only solvable — you can let the orb settle before every flip, so nothing
-// can be failed through execution. So the bar each candidate has to clear is
-// "NOT rest-only solvable", with a timing window a human can actually hit.
+// The rooms live in src/prototypes.gd and are read from there, so the set that
+// is measured is the set that is played. They do not ship.
+//
+// The bar: NOT rest-only solvable. The shipped set is too easy mainly because
+// 32 of its 40 rooms are — the orb can be left to settle before every flip, so
+// nothing can be failed through execution.
+//
+// Read the window numbers with care. Playtesting overturned them once already: a
+// room scored at 0ms was beaten first try because the room before it had taught
+// the move, and two rooms differing 11x in window played as identical. A search
+// printing [search truncated] hit the node cap, so its window is a lower bound.
+// What separated hard from annoying in play was whether a mistake could kill.
 import {
   solveRestOnly, solveTimed, play,
   cloneWorld, advance, clearsUntouched, HORIZON,
 } from './reference/search.js';
-import { rotate } from './reference/physics.js';
-import { createWorld } from './reference/physics.js';
-import { validateLevels, GRID } from './lib/levels.mjs';
+import { createWorld, rotate } from './reference/physics.js';
+import { loadLevelsFrom, validateLevels, GRID } from './lib/levels.mjs';
+
+const PROTOTYPES = loadLevelsFrom(new URL('../src/prototypes.gd', import.meta.url));
 
 /**
  * The window on EACH flip of a route, not just the tightest.
  *
- * slackOf() in the reference search computes these and then reports only the
- * minimum, which hides where a room is actually hard: one knife-edge flip among
- * four generous ones plays completely differently from four medium ones. Same
- * probe, kept per step. `null` means the flip is taken at rest — no timing.
+ * slackOf() in the reference search computes these and reports only the minimum,
+ * which hides where a room is actually hard: one knife-edge flip among four
+ * generous ones plays nothing like four medium ones. Same probe, kept per step.
+ * `null` means the flip is taken at rest — no timing at all.
  */
 function stepWindows(level, path) {
   const w = createWorld(level);
@@ -61,153 +70,20 @@ function stepWindows(level, path) {
   return windows;
 }
 
-// A hole in a floor is only reachable by a timed flip when it is NOT against a
-// wall: the orb can always fly to a wall and stop there for free, so any target
-// away from one demands either a sticky pad or a mid-flight commit. That is the
-// primitive most of these are built on.
-const PROTOTYPES = [
-  {
-    name: 'Skim',
-    idea: 'Ice skid into a hole, with lethal overshoot. Flip down late and you '
-        + 'carry too much speed, skim the hole and hit the spikes.',
-    par: 2,
-    map: [
-      '#############',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#O..........#',
-      '#...........#',
-      '#IIIII.II^^^#',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#.....E.....#',
-      '#############',
-    ],
-  },
-  {
-    name: 'Trapdoor',
-    idea: 'The button sits directly on its own door, so touching it removes the '
-        + 'floor underneath and drops the orb into the chamber below.',
-    par: 3,
-    map: [
-      '#############',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#O..........#',
-      '#...........#',
-      '#...........#',
-      '#.....1.....#',
-      '#####a#######',
-      '#...........#',
-      '#...........#',
-      '#.....E.....#',
-      '#############',
-    ],
-  },
-  {
-    name: 'Overhead',
-    idea: 'A spiked ceiling with one safe column, so the reflex flip-up at a '
-        + 'wall is fatal and the climb has to be committed mid-flight.',
-    par: 3,
-    map: [
-      '#############',
-      '#E..........#',
-      '#...........#',
-      '######a######',
-      '#^^^^^.^^^^^#',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#O.........1#',
-      '#############',
-    ],
-  },
-  {
-    name: 'Trapdoor + ice',
-    idea: 'The same trapdoor, but the floor either side of the door is ice, so '
-        + 'the orb keeps sliding toward the hole instead of having to arrive on it.',
-    par: 3,
-    map: [
-      '#############',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#O..........#',
-      '#...........#',
-      '#...........#',
-      '#.....1.....#',
-      '#IIIIIaIIIII#',
-      '#...........#',
-      '#...........#',
-      '#.....E.....#',
-      '#############',
-    ],
-  },
-  {
-    name: 'Overhead, 2-cell gap',
-    idea: 'The same spiked ceiling, with the safe column widened to two cells.',
-    par: 3,
-    map: [
-      '#############',
-      '#E..........#',
-      '#...........#',
-      '#####aa######',
-      '#^^^^..^^^^^#',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#O.........1#',
-      '#############',
-    ],
-  },
-  {
-    name: 'Well',
-    idea: 'Exit below the start rather than above it, down a one-cell shaft — '
-        + 'the ladder topology every shipped room shares, inverted.',
-    par: 3,
-    map: [
-      '#############',
-      '#O..........#',
-      '#IIIIIIII.II#',
-      '#########.###',
-      '#########.###',
-      '#########.###',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#...........#',
-      '#E..........#',
-      '#...........#',
-      '#############',
-    ],
-  },
-];
-
-// `node tools/prototypes.mjs Overhead` prints one room's route step by step.
 const only = process.argv[2];
 
-const problems = validateLevels(PROTOTYPES, {expectFullSet: false});
+const PROTOTYPE_ROOMS = PROTOTYPES;
+const problems = validateLevels(PROTOTYPE_ROOMS, { expectFullSet: false });
 if (problems.length) {
   console.error('prototype authoring problems:');
   for (const p of problems) console.error('  ' + p);
   process.exit(1);
 }
-console.log(`${PROTOTYPES.length} prototypes, all ${GRID}x${GRID} and valid\n`);
+console.log(`${PROTOTYPE_ROOMS.length} prototypes from src/prototypes.gd, all ${GRID}x${GRID} and valid\n`);
 
-for (const level of PROTOTYPES) {
+for (const level of PROTOTYPE_ROOMS) {
   if (only && !level.name.toLowerCase().startsWith(only.toLowerCase())) continue;
-  console.log(`${level.name}`);
-  console.log(`  ${level.idea}`);
+  console.log(level.name);
 
   const rest = solveRestOnly(level);
   const fast = solveTimed(level);
@@ -218,36 +94,32 @@ for (const level of PROTOTYPES) {
   }
 
   if (rest.ok) {
-    const t = play(level, rest.path).time;
-    console.log(`  rest-only:  ${rest.rotations} rot / ${t.toFixed(1)}s   <-- TOO EASY, no timing needed`);
+    console.log(`  rest-only:  ${rest.rotations} rot / ${play(level, rest.path).time.toFixed(1)}s`
+      + '   <-- TOO EASY, nothing has to be timed');
   } else {
-    console.log(`  rest-only:  none  <-- good, execution is required`);
+    console.log('  rest-only:  none  <-- good, execution is required');
   }
 
   if (fast.ok) {
     const win = (s) => (s === null ? 'no timing' : `${(s * 1000).toFixed(0)}ms`);
     console.log(`  fastest:    ${fast.shortest.path.length} rot (window ${win(fast.shortest.slack)})`);
     console.log(`  forgiving:  ${fast.best.path.length} rot (window ${win(fast.best.slack)})`
-      + (fast.truncated ? '  [search truncated]' : ''));
+      + (fast.truncated ? '  [search truncated — window is a lower bound]' : ''));
   } else {
     console.log(`  timed:      ${fast.reason}`);
   }
 
   if (only && fast.ok) {
-    const windows = stepWindows(level, fast.best.path);
     console.log('\n  the forgiving route, flip by flip:');
-    fast.best.path.forEach((s, i) => {
-      const w = windows[i];
+    stepWindows(level, fast.best.path).forEach((w, i) => {
+      const s = fast.best.path[i];
       const verdict = w === null ? 'at rest, no timing'
-        : w >= 0.25 ? `${(w*1000).toFixed(0)}ms  comfortable`
-        : w >= 0.15 ? `${(w*1000).toFixed(0)}ms  tight but fair`
-        : `${(w*1000).toFixed(0)}ms  UNFAIR`;
-      console.log(`    ${i + 1}. wait ${(s.wait*1000).toFixed(0).padStart(4)}ms  ->  ` +
-                  `press ${s.dir > 0 ? 'CCW' : 'CW '}   ${verdict}`);
+        : w >= 0.25 ? `${(w * 1000).toFixed(0)}ms  comfortable`
+        : w >= 0.15 ? `${(w * 1000).toFixed(0)}ms  tight`
+        : `${(w * 1000).toFixed(0)}ms  very tight`;
+      console.log(`    ${i + 1}. wait ${(s.wait * 1000).toFixed(0).padStart(4)}ms  ->  `
+        + `press ${s.dir > 0 ? 'CCW' : 'CW '}   ${verdict}`);
     });
   }
   console.log('');
 }
-
-console.log('For reference, the shipped set: 32 of 40 rooms are rest-only solvable,');
-console.log('and the tightest forgiving window anywhere is 175ms.');

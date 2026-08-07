@@ -85,7 +85,25 @@ web export. The nine attempts are worth passing: the last three rooms are
 deliberately too tight and exist only for comparison.
 
 From the editor, put the same arguments after `--` in **Project Settings →
-Editor → Run → Main Run Args**. The game prints a line on startup when an
+Editor → Run → Main Run Args**.
+
+### Playtest logs
+
+Every local run writes a session log to `tmp/sessions/` (gitignored): per room,
+each attempt with what ended it, the rotations used, the room clock and the
+wall-clock time. Read it with:
+
+```bash
+node tools/session-report.mjs          # the last session
+node tools/session-report.mjs --all    # every session, aggregated per room
+```
+
+The gap between wall time and room time is the interesting column — the room
+clock only starts on the first rotation, so the difference is hesitation, which
+is what a genuinely puzzling room produces and a merely fiddly one does not.
+
+A web export never writes anything: `SessionLog.is_enabled()` is false there, so
+none of this reaches the shipped game or the host. The game prints a line on startup when an
 override is active, so a test run can't be mistaken for the shipped defaults.
 
 A web export has no user args, so this is inert in production and cannot shadow
@@ -303,6 +321,7 @@ reference engine invalidates all forty.
     src/constants.gd    design surface, layout, tuning, config declaration
     src/levels.gd       the forty rooms, sorted by difficulty, + a validator
     src/prototypes.gd   scratch rooms for design work, not shipped
+    src/session_log.gd  playtest logging, local runs only
     src/sim.gd          orb simulation (node-free, verified against the JS)
     src/score.gd        scoring + flavor text (pure)
     src/game.gd         state machine, input, Minit lifecycle
