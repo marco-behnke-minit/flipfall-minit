@@ -46,22 +46,30 @@ extends RefCounted
 ##     to visibly change what happens, not just widen a number.
 
 const ALL := [
-	# The slalom. Sticky is SOLID — it is a block, not a coating — so a patch in a
-	# lane seals it rather than slowing anything that passes. That is what makes
-	# this shape work where a two-lane corridor cannot: at two lanes a patch leaves
-	# a 60px gap for a 44px orb and the answer is forced, with no line down the
-	# middle to be skilled about.
+	# The slalom, and the room that taught me sticky cannot do this job.
 	#
-	# At THREE lanes with the outer two patched alternately, both routes exist:
+	# Sticky is SOLID — a block, not a coating — so a patch in a lane seals it
+	# rather than slowing whatever passes. That is what makes three lanes work
+	# where two cannot: at two lanes a patch leaves a 60px gap for a 44px orb and
+	# the route is forced, with no middle line to be skilled about. At three:
 	#
-	#   SAFE      ride a wall, and switch lanes before each patch seals your lane.
-	#   SKILLED   hold the middle channel and cross without touching anything. It
-	#             is a 16.5px band centred on row 6.5 — the whole geometric slack
-	#             of a 44px orb in a 60px channel, and not a pixel more.
+	#   SAFE      ride a wall, and switch lanes before each block seals yours.
+	#   SKILLED   hold the middle channel and touch nothing. A 16.8px band on row
+	#             6.5 — the whole geometric slack of a 44px orb in a 60px channel.
 	#
-	# Reaching that band is the hard part, not holding it. Gravity along the
+	# The blocks are STONE, because purple here would be a lie. Built with sticky
+	# the room solves in 4 rotations at a 300ms window; built with stone, the same
+	# 4 rotations at the same 300ms. You avoid the blocks, so you never slide on
+	# them, so their material never acts. Moving the sticky onto the ridden walls
+	# instead changes nothing either — sticky, stone and ice all give 4/300ms.
+	#
+	# Sticky only earns a room when the route is FORCED to slide along it with
+	# gravity pressing in. That is a narrow condition, and Pothole below is the
+	# shape that meets it.
+	#
+	# Reaching the middle band is the hard part, not holding it. Gravity along the
 	# corridor does not cancel vertical speed, so a level run needs vy = 0 at the
-	# moment of the flip: rise, arrest the rise, and turn at the apex. That is the
+	# moment of the flip: rise, arrest the rise, turn at the apex. That is the
 	# two-flips-in-the-air control, with the corridor as the thing it is FOR.
 	# A spike leads each patch, so riding a lane into a sealed section impales you
 	# rather than merely parking you against it — the playtest note that a room you
@@ -74,9 +82,9 @@ const ALL := [
 		"#############",
 		"#############",
 		"#############",
-		"#..^TT......#",
+		"#..^##......#",
 		"#O.........E#",
-		"#.....^TT...#",
+		"#.....^##...#",
 		"#############",
 		"#############",
 		"#############",
