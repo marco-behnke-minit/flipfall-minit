@@ -11,7 +11,28 @@ extends RefCounted
 ## rooms are rest-only solvable, so the orb can be left to settle before every
 ## flip and nothing can be failed through execution.
 ##
-## WHAT PLAYTESTING SAID, which overturned the metric that produced them:
+## THE CREEP, which is the finding that matters most.
+##
+## Alternating gravity left/right/left walks the orb along a surface a fraction
+## of a cell at a time, with no timing required at all — flip, flip back, repeat
+## until it is where you want it. Measured on a flat floor: about 0.9 cells per
+## flip-pair on ice at a 100ms half-period, and 0.6 on stone, both controllable
+## by how long you hold each flip.
+##
+## So it is NOT an ice problem. Any room whose challenge is "get the orb to a
+## particular spot on a surface" is defeated by it, and every shipped room is
+## exactly that. It is also invisible to the solver: search.js caps at
+## MAX_ROTATIONS = 12, and a creep spends far more than twelve, so the windows it
+## reports describe a route no player would take.
+##
+## The two rooms that survived playtesting — Overhead and Overhead (narrow) —
+## both ask for a commitment made IN THE AIR, flipping up through a gap in a
+## spiked ceiling. There is no surface to creep along mid-flight and gravity acts
+## in full, so the timing is real. That is the principle worth building on:
+##
+##     surface positioning is cheesable; airborne commitment is not.
+##
+## WHAT ELSE PLAYTESTING SAID, which overturned the metric that produced them:
 ##
 ##   - Lethality is the difficulty axis, not the timing window. The rooms with
 ##     spikes played as hard and insane; the rooms where a mistake only cost a
