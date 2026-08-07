@@ -18,12 +18,19 @@ export const GRAV = [
 export const DOWN = 0;
 
 // Surface materials. `k` is a per-second exponential velocity decay, so an orb
-// landing at speed v skids roughly v/k pixels before settling. At MAX_SPEED
-// that is ~5 cells on stone, most of the room on ice, and half a cell on
-// sticky — which is the whole point of the two modifiers.
+// landing at speed v skids roughly v/k pixels before settling. At MAX_SPEED that
+// is ~5 cells on stone and most of the room on ice.
+//
+// Sticky used to brake at k=30 — half a cell — and that is precisely why it never
+// mattered. A surface that stops the orb in 33ms cannot be crossed, so no route
+// ever ran along it; it could only ever be avoided. Measured in a room built to
+// force the crossing, the winning line spent 33ms of its 250ms allowance on the
+// tile at k=30, and 246ms at k=3. So sticky now grips like stone and is defined
+// by STICKY_DEATH instead: a floor you can run on but never stand on. `e` stays
+// at 0 so it still lands dead, with no bounce.
 const WALL = { k: 3.0, e: 0.1, kind: 'wall' };
 const ICE = { k: 0.25, e: 0.05, kind: 'ice' };
-const STICKY = { k: 30, e: 0.0, kind: 'sticky' };
+const STICKY = { k: 3.0, e: 0.0, kind: 'sticky' };
 
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 

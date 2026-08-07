@@ -31,7 +31,7 @@ const K_WALL := 3.05
 const E_WALL := 0.1
 const K_ICE := 0.25
 const E_ICE := 0.05
-const K_STICKY := 30.0
+const K_STICKY := 3.0
 const E_STICKY := 0.0
 
 var grid: Array = []            # Array[Array[String]], one single-char String per cell

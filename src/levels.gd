@@ -96,22 +96,33 @@ const ALL := [
 		"#IIIIIIIIIII#",
 		"#############",
 	]},
-	{"name": "Grip", "par": 3, "map": [
+	# Rebuilt. The old Grip put its tar in the bottom floor at cols 5-7 and then
+	# routed you up and away from it — playtested as "no use of that tile, you take
+	# a different path to solve anyways", and the counterfactual agreed: swapping it
+	# for stone left the room identical.
+	#
+	# Here the tar IS the floor, and the exit is at the far end of it. There is no
+	# path that avoids it: land, slide, and be off before the 250ms runs out. The
+	# winning line rides the tar for up to 246ms of the allowance, and 69% of
+	# sampled timings die — held by the tar, or impaled if you overrun.
+	#
+	# The spawn tile is stone. Tar there would kill the player for thinking.
+	{"name": "Grip", "par": 4, "map": [
 		"#############",
-		"#E..........#",
+		"#############",
+		"#############",
+		"#O.........^#",
+		"##.........##",
 		"#...........#",
-		"###.....#####",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#O..........#",
-		"#####TTT#####",
+		"#TTTTTTTTTTE#",
+		"#############",
+		"#############",
+		"#############",
+		"#############",
+		"#############",
 		"#############",
 	]},
-	{"name": "Anchor", "par": 5, "map": [
+	{"name": "Anchor", "par": 4, "map": [
 		"#############",
 		"#E..........#",
 		"#...........#",
