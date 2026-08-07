@@ -1,6 +1,6 @@
 class_name Levels
 extends RefCounted
-## Forty handcrafted 13x13 rooms. One screen, one puzzle, no scrolling.
+## Handcrafted 13x13 rooms. One screen, one puzzle, no scrolling.
 ##
 ##   #  wall            .  air              O  orb spawn        E  exit
 ##   ^  spike           I  ice (slippery)   T  sticky (grippy)
@@ -9,15 +9,16 @@ extends RefCounted
 ## `par` is the shortest solution the solver could find. It is informational
 ## only — there is no rotation cap.
 ##
-## ORDER MATTERS. Rooms are sorted by measured difficulty, ascending, and the
-## tiers are the four tenths of that order — so a drop that publishes a segment
-## gets a band that actually rises as it is played. The ranking comes from
-## tools/difficulty.mjs, which scores three independent axes: route length,
-## whether a timing window is required at all, and how lethal the room is. `par`
-## alone measures only the first, which is how the tiers came to overlap so badly
-## that an easy room outranked a hard one. The single departure from a pure sort
-## is that the cheapest room introducing each element is pinned into the easy
-## tier, because easy is also the teaching tier and the default published drop.
+## ORDER MATTERS. Rooms are grouped into blocks by the newest mechanic each one
+## asks for, in the order a player meets them, and ramp up inside each block. The
+## felt difficulty is a sawtooth — introduce, push, master, reset — and only the
+## rise is authored; the fall happens in the player. tools/curve.mjs produces it.
+##
+## Every room here earns its place on two measured tests, applied by
+## tools/triage.mjs: deleting its hazards changes the solution, and its geometry
+## is not a copy of an earlier room's. Eighteen rooms that failed both were cut —
+## fifteen had a skeleton identical to a room already played, wearing spikes the
+## route never went near.
 
 const ALL := [
 	# ===== ROTATE — the one control, and nothing else to think about
@@ -174,7 +175,7 @@ const ALL := [
 		"#############",
 	]},
 
-	# ===== SPIKES — the first way to die, and the first reason to look before flipping
+	# ===== SPIKES — the first way to die
 	{"name": "Teeth", "par": 3, "map": [
 		"#############",
 		"#..........E#",
@@ -188,126 +189,6 @@ const ALL := [
 		"#...........#",
 		"#...........#",
 		"#O..........#",
-		"#############",
-	]},
-	{"name": "Needle", "par": 4, "map": [
-		"#############",
-		"#E..........#",
-		"#...........#",
-		"#a###########",
-		"#...........#",
-		"#.^^^^^^^^^^#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#O.........1#",
-		"#############",
-	]},
-	{"name": "Shortcut", "par": 4, "map": [
-		"#############",
-		"#E..........#",
-		"#...........#",
-		"#c###########",
-		"#3..........#",
-		"#.^^^^^^^^^.#",
-		"#b###########",
-		"#2..........#",
-		"#.^^^^^^^^^.#",
-		"#a###########",
-		"#...........#",
-		"#O1.........#",
-		"#############",
-	]},
-	{"name": "Cascade", "par": 6, "map": [
-		"#############",
-		"#..........E#",
-		"#...........#",
-		"###########c#",
-		"#..........3#",
-		"#.^^^^^^^^^.#",
-		"#b###########",
-		"#2..........#",
-		"#.^^^^^^^^^.#",
-		"###########a#",
-		"#...........#",
-		"#O.........1#",
-		"#############",
-	]},
-	{"name": "Rungs", "par": 8, "map": [
-		"#############",
-		"#E..........#",
-		"#...........#",
-		"#c###########",
-		"#3..........#",
-		"#^^^^^^^^^^.#",
-		"###########b#",
-		"#..........2#",
-		"#...........#",
-		"#a###########",
-		"#...........#",
-		"#O.........1#",
-		"#############",
-	]},
-	{"name": "Crucible", "par": 8, "map": [
-		"#############",
-		"#E..........#",
-		"#...........#",
-		"#c###########",
-		"#..........3#",
-		"#.^^^^^^^^^.#",
-		"#b###########",
-		"#..........2#",
-		"............#",
-		"###########a#",
-		"#...........#",
-		"#O1.........#",
-		"#############",
-	]},
-	{"name": "Forge", "par": 8, "map": [
-		"#############",
-		"#E..........#",
-		"#...........#",
-		"#c###########",
-		"#..........3#",
-		"#.^^^^^^^^^.#",
-		"###########b#",
-		"#2..........#",
-		"#.^^^^^^^^^.#",
-		"###########a#",
-		"#............",
-		"#O1.........#",
-		"#############",
-	]},
-	{"name": "Meatgrinder", "par": 8, "map": [
-		"#############",
-		"#E..........#",
-		"#...........#",
-		"#c###########",
-		"#..........3#",
-		"#.^^^^^^^^^.#",
-		"###########b#",
-		"#2..........#",
-		"..^^^^^^^^^..",
-		"#a###########",
-		"#...........#",
-		"#O.........1#",
-		"#############",
-	]},
-	{"name": "Razor", "par": 12, "map": [
-		"#############",
-		"#E..........#",
-		"#...........#",
-		"#c###########",
-		"#..........3#",
-		"#.^^^^^^^^^..",
-		"#b###########",
-		"#..........2#",
-		"#.^^^^^^^^^..",
-		"#a###########",
-		"#...........#",
-		"#O.........1#",
 		"#############",
 	]},
 	{"name": "Vault", "par": 12, "map": [
@@ -326,7 +207,7 @@ const ALL := [
 		"#############",
 	]},
 
-	# ===== ICE — almost no grip, so landings overshoot and momentum has to be planned
+	# ===== ICE — almost no grip, so momentum has to be planned
 	{"name": "Trapdoor", "par": 2, "map": [
 		"#############",
 		"#...........#",
@@ -340,21 +221,6 @@ const ALL := [
 		"#...........#",
 		"#...........#",
 		"#^^^^^.E....#",
-		"#############",
-	]},
-	{"name": "Glide", "par": 4, "map": [
-		"#############",
-		"#...........#",
-		"#.........#.#",
-		"#.........#E#",
-		"#.........#.#",
-		"#.........#.#",
-		"#.........###",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#O..........#",
-		"#IIIIIIIIIII#",
 		"#############",
 	]},
 	{"name": "Well", "par": 4, "map": [
@@ -387,21 +253,6 @@ const ALL := [
 		"#.....E.....#",
 		"#############",
 	]},
-	{"name": "Rink", "par": 5, "map": [
-		"#############",
-		"#..........E#",
-		"#...........#",
-		"#b###########",
-		"#2..........#",
-		"#...........#",
-		"###########a#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#O.........1#",
-		"#IIIIIIIIIII#",
-		"#############",
-	]},
 	{"name": "Skate", "par": 4, "map": [
 		"#############",
 		"#..........E#",
@@ -414,36 +265,6 @@ const ALL := [
 		"#...........#",
 		"#...........#",
 		"#O.........^#",
-		"#IIIIIIIIIII#",
-		"#############",
-	]},
-	{"name": "Gauntlet", "par": 5, "map": [
-		"#############",
-		"#..........E#",
-		"#...........#",
-		"#b###########",
-		"#2..........#",
-		"#.^^^^^^^^^.#",
-		"###########a#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#O.........1#",
-		"#IIIIIIIIIII#",
-		"#############",
-	]},
-	{"name": "Slalom", "par": 5, "map": [
-		"#############",
-		"#..........E#",
-		"#...........#",
-		"#b###########",
-		"#2..........#",
-		"#...........#",
-		"###########a#",
-		"#...........#",
-		"#^^^^^^^^^^.#",
-		"#...........#",
-		"#O.........1#",
 		"#IIIIIIIIIII#",
 		"#############",
 	]},
@@ -586,98 +407,8 @@ const ALL := [
 		"#O1.........#",
 		"#############",
 	]},
-	{"name": "Glacier", "par": 10, "map": [
-		"#############",
-		"#..........E#",
-		"#...........#",
-		"###########c#",
-		"#3..........#",
-		"#...........#",
-		"###########b#",
-		"#2..........#",
-		"#...........#",
-		"###########a#",
-		"#...........#",
-		"#O1.........#",
-		"IIIIIIIIIIIII",
-	]},
-	{"name": "Freefall", "par": 6, "map": [
-		"#############",
-		"#..........E#",
-		"#...........#",
-		"###########c#",
-		"#3..........#",
-		"..^^^^^^^^^.#",
-		"#b###########",
-		"#..........2#",
-		"#.^^^^^^^^^..",
-		"###########a#",
-		"............#",
-		"#O1.........#",
-		"IIIIIIIIIIIII",
-	]},
-	{"name": "Whiteout", "par": 10, "map": [
-		"#############",
-		"#..........E#",
-		"#...........#",
-		"###########c#",
-		"#3..........#",
-		"#...........#",
-		"#b###########",
-		"#..........2#",
-		"#.^^^^^^^^^.#",
-		"#a###########",
-		"#...........#",
-		"#O.........1#",
-		"IIIIIIIIIIIII",
-	]},
-	{"name": "Maelstrom", "par": 8, "map": [
-		"#############",
-		"#E..........#",
-		"#...........#",
-		"#c###########",
-		"#..........3#",
-		"#.^^^^^^^^^..",
-		"###########b#",
-		"#2..........#",
-		"#.^^^^^^^^^.#",
-		"#a###########",
-		"............#",
-		"#O.........1#",
-		"IIIIIIIIIIIII",
-	]},
-	{"name": "Abyss", "par": 10, "map": [
-		"#############",
-		"#..........E#",
-		"#...........#",
-		"###########c#",
-		"#3..........#",
-		".............",
-		"###########b#",
-		"#2..........#",
-		"#.^^^^^^^^^.#",
-		"#a###########",
-		"#...........#",
-		"#O.........1#",
-		"IIIIIIIIIIIII",
-	]},
-	{"name": "Singularity", "par": 10, "map": [
-		"#############",
-		"#..........E#",
-		"#...........#",
-		"###########c#",
-		"#3..........#",
-		"..^^^^^^^^^.#",
-		"#b###########",
-		"#..........2#",
-		"#.^^^^^^^^^..",
-		"#a###########",
-		"............#",
-		"#O.........1#",
-		"IIIIIIIIIIIII",
-	]},
 
-	# ===== CEILING SPIKES — the flip up is no longer free, and has to be committed
+	# ===== CEILING SPIKES — the flip up is no longer free
 	{"name": "Overhead", "par": 5, "map": [
 		"#############",
 		"#E..........#",

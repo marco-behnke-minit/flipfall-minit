@@ -210,7 +210,7 @@ a visible sacrifice rather than the 21% it cost when rotations were a flat −5.
 
 ## Room order
 
-45 rooms, ordered as a **learning curve** rather than a difficulty ranking —
+27 rooms, ordered as a **learning curve** rather than a difficulty ranking —
 `tools/curve.mjs` produces the order and `src/levels.gd` carries it.
 
 A monotonic ramp is the wrong shape. Difficulty is not a property of a room, it
@@ -225,14 +225,30 @@ authored; the fall happens in the player.**
 | --- | --- | --- |
 | rotate | 1 | the one control, nothing else to think about |
 | doors | 9 | routing; nothing can kill you yet |
-| spikes | 10 | the first way to die |
-| ice | 8 | almost no grip, so momentum has to be planned |
+| spikes | 2 | the first way to die |
+| ice | 4 | almost no grip, so momentum has to be planned |
 | sticky | 8 | the only way to stop somewhere exact |
-| open edges | 7 | the room stops holding you in |
+| open edges | 1 | the room stops holding you in |
 | ceiling spikes | 2 | the flip up is no longer free |
 
 Five of these came from `src/prototypes.gd` after playtesting: Skim, Well,
 Trapdoor, Overhead and Eyelet.
+
+### Every room has to earn its place
+
+A full playthrough cleared 44 of 45 rooms on the **first attempt**, with one to
+three seconds of thinking per room. `tools/triage.mjs` applies the two tests that
+explain why, and **eighteen rooms were cut** for failing both:
+
+- **Decoration.** Delete a room's hazards and re-solve. Same rotations means they
+  never constrained anything. 15 of 26 spiked rooms and 11 of 19 iced rooms
+  failed this — Vault passed within a cell of all 27 of its spikes and touched
+  none, because the route flew down a corridor they merely lined.
+- **Repetition.** Strip the hazards to bare geometry and compare. Rungs was
+  *identical* to Ladder, Razor to Spire, Singularity to Whiteout — same room,
+  different paint.
+
+Run it on anything new: a room that does not come out KEEP is not a room yet.
 
 A consequence worth knowing: this order does **not** segment cleanly. Publishing
 an arbitrary tenth drops a player into the middle of a mechanic they were never
