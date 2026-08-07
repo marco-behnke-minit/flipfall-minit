@@ -28,9 +28,11 @@ export function loadLevels() {
  * The same authoring checks src/levels.gd runs at startup, so a slip is caught
  * by the verifier too rather than only at runtime. Returns a list of problems.
  */
-export function validateLevels(levels) {
+export function validateLevels(levels, {expectFullSet = true} = {}) {
   const problems = [];
-  if (levels.length !== LEVEL_COUNT) {
+  // Only the shipped set has to fill the tier structure; a scratch set of
+  // candidate rooms is checked for the same authoring slips but not the count.
+  if (expectFullSet && levels.length !== LEVEL_COUNT) {
     problems.push(`${levels.length} rooms, but the tier structure declares ${LEVEL_COUNT}`);
   }
   levels.forEach((lvl, i) => {
