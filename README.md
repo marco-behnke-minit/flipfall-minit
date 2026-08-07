@@ -21,6 +21,7 @@ node tools/run-sim.mjs 8                         # simulate a run, 8s/room
 node tools/compare-trace.mjs                     # src/sim.gd == the reference
 godot --headless --script res://tools/test_score.gd    # scoring + flavor text
 godot --headless --script res://tools/test_config.gd  # config coercion + clamping
+godot --headless --script res://tools/test_music.gd   # the music is actually wired up
 node tools/check-meta.mjs                        # meta.json: schema + semantic
 node tools/test-schema.mjs                       # the schema validator itself
 node tools/difficulty.mjs                        # rank rooms vs their tier
@@ -317,9 +318,7 @@ Bundled third-party material keeps its own terms, listed in
 `THIRD-PARTY-NOTICES.md`: the Minit Games SDK addon (MIT, Drop GmbH), and the
 Lato and Bowlby One SC fonts (SIL OFL).
 
-One caveat, and it gates both publishing this repository and shipping the game:
-`assets/audio/loop.mp3` was generated on Suno's **Basic (free) plan**, where
-Suno owns the song and use is non-commercial only. It is not ours to
-redistribute, so the MIT grant does not extend to it — keep this repository
-private while the file is in it. The game degrades gracefully without the track;
-every sound effect is synthesised at runtime.
+That includes the music: `assets/audio/neon-drift-circuit.mp3` was generated
+with Suno on a Pro subscription, so it is owned outright and released under MIT
+with everything else. Every sound effect is synthesised at runtime, and the game
+runs without the track if it is removed.

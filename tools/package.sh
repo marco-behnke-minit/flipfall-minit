@@ -34,7 +34,8 @@ node tools/check-meta.mjs
 node tools/test-schema.mjs >/dev/null
 "$GODOT" --headless --script res://tools/test_score.gd >/dev/null
 "$GODOT" --headless --script res://tools/test_config.gd >/dev/null
-echo "scoring, config and schema checks passed"
+"$GODOT" --headless --script res://tools/test_music.gd >/dev/null
+echo "scoring, config, schema and music checks passed"
 node tools/solve.mjs | tail -1
 node tools/compare-trace.mjs | tail -1
 

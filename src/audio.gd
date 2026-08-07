@@ -8,7 +8,7 @@ extends Node
 ## The music track is the one real audio asset, and it is deliberately left
 ## playing under the host's result screen rather than cutting to silence.
 
-const MUSIC_PATH := "res://assets/audio/loop.mp3"
+const MUSIC_PATH := "res://assets/audio/neon-drift-circuit.mp3"
 const MIX_RATE := 44100
 const MASTER := 0.34         # the WebAudio master gain
 const MUSIC_LEVEL := 0.3

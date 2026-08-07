@@ -40,37 +40,28 @@ A web export embeds the Godot engine runtime. Godot is MIT licensed
 its own copyright notice into the build. Nothing in this repository contains
 engine source.
 
-## Music — Suno Basic plan, NON-COMMERCIAL ONLY, NOT REDISTRIBUTABLE
+## Music — MIT, same as the rest
 
-`assets/audio/loop.mp3` was generated with [Suno](https://suno.com) on the
-**Basic (free) plan**. Under Suno's terms for that tier:
+`assets/audio/neon-drift-circuit.mp3` was generated with [Suno](https://suno.com)
+on a **Pro** subscription. Suno's terms for paid tiers grant the subscriber
+ownership of songs made while subscribed, plus commercial use rights, and name
+use in video games explicitly. Copyright is held by Marco Behnke; the track's
+ID3 tags carry that line and Suno's creation id, so the provenance travels with
+the file.
 
-- **Suno owns the song.** The account holder does not.
-- Use is permitted for **non-commercial purposes only**.
-- Subscribing to a paid plan later does **not** grant rights retroactively to
-  songs made on the free plan; Suno considers that case by case.
+It is released under this project's MIT licence along with everything else — so
+it can be reused, including commercially, on the same terms as the code.
 
-Two consequences, and neither is about this repository's own code:
+Two things worth stating rather than leaving implied:
 
-1. **It is not ours to redistribute.** The MIT grant in `LICENSE` does not
-   extend to this file, and a public repository would be offering others rights
-   the account holder does not hold. Keep the repository private while this file
-   is in it — noting it is in git history from the first commit, so removing it
-   from the tip is not enough to undo that.
+- Suno's help pages do not address **onward sublicensing** either way. Releasing
+  the track under MIT is a decision taken here on the basis that it is neither
+  prohibited nor addressed, and that the song is owned outright.
+- Suno notes that "granting commercial use rights does not guarantee copyright
+  protection" — largely AI-generated music may not be eligible for copyright in
+  some jurisdictions. That could limit how enforceable any grant is, which
+  matters little given the grant is permissive.
 
-2. **It likely cannot ship commercially.** Publishing on a platform where
-   creators can earn is hard to characterise as non-commercial use. That needs
-   settling before release, not after.
-
-The clean fix is to regenerate the track while subscribed to Pro or Premier, so
-the song is owned outright with a commercial licence — or to replace it with one
-whose terms are already clear.
-
-Removing it degrades gracefully and is a real option: with the file gone the
-game still boots, fires `loading_done` and `report_result`, and raises no
-errors. Every sound effect is synthesised at runtime; music is the only asset.
-
-Sources: Suno, [Do I have the copyrights to songs I
-made?](https://help.suno.com/en/articles/2746945) and [If I subscribe, do I get
-rights for the songs I made before
-subscribing?](https://help.suno.com/en/articles/2425729)
+Sources: Suno, [What rights do I have with a paid
+subscription?](https://help.suno.com/en/articles/9601665) and [Do I have the
+copyrights to songs I made?](https://help.suno.com/en/articles/2746945)
