@@ -65,7 +65,7 @@ func room_started(index: int, name: String, par: int) -> void:
 		"name": name,
 		"par": par,
 		"attempts": [],
-		"deaths": {"spike": 0, "out": 0},
+		"deaths": {"spike": 0, "out": 0, "stuck": 0},
 		"retries": 0,
 		"outcome": "in progress",
 	}
@@ -74,7 +74,8 @@ func room_started(index: int, name: String, par: int) -> void:
 	_flush()
 
 
-## `how` is "clear", "spike", "out" or "retry".
+## `how` is "clear", "retry", or a death cause ("spike", "out", "stuck").
+## Unknown causes are counted rather than crashing the run.
 func attempt_ended(how: String, rotations: int, room_seconds: float) -> void:
 	if _path.is_empty() or _room.is_empty():
 		return
@@ -87,7 +88,7 @@ func attempt_ended(how: String, rotations: int, room_seconds: float) -> void:
 	match how:
 		"clear": _room["outcome"] = "cleared"
 		"retry": _room["retries"] = int(_room["retries"]) + 1
-		_: _room["deaths"][how] = int(_room["deaths"][how]) + 1
+		_: _room["deaths"][how] = int(_room["deaths"].get(how, 0)) + 1
 	_flush()
 
 

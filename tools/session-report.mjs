@@ -47,10 +47,13 @@ for (const file of chosen) {
     const cleared = r.attempts.find((a) => a.outcome === 'clear');
     const wall = r.attempts.reduce((t, a) => t + a.wallSeconds, 0);
     const roomTime = r.attempts.reduce((t, a) => t + a.roomSeconds, 0);
-    const died = r.deaths.spike + r.deaths.out;
+    // Summed over whatever causes the log carries, so a cause added to the game
+    // shows up here without this file having to learn its name first.
+    const LABEL = { spike: 'spike', out: 'fell out', stuck: 'tar' };
+    const died = Object.values(r.deaths).reduce((n, v) => n + v, 0);
     const parts = [];
-    if (r.deaths.spike) parts.push(`${r.deaths.spike} spike`);
-    if (r.deaths.out) parts.push(`${r.deaths.out} fell out`);
+    for (const [cause, n] of Object.entries(r.deaths))
+      if (n) parts.push(`${n} ${LABEL[cause] ?? cause}`);
     if (r.retries) parts.push(`${r.retries} retry`);
 
     if (!all) {
