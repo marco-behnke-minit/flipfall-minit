@@ -44,16 +44,25 @@ const ALL := [
 		"#############",
 	]},
 	# The exit is BELOW the start, down a one-cell shaft — the ladder shape every
-	# shipped room is built on, inverted. Playtest of the first version, which
-	# had no hazard: "not hard, just annoying, you can't die." So overshooting
-	# the shaft now runs into spikes.
+	# shipped room is built on, inverted.
+	#
+	# Two playtests shaped this. With no hazard at all it was "not hard, just
+	# annoying, you can't die". With spikes one cell past the shaft it was
+	# unplayable: seven attempts, seven impalings, never cleared — overshooting
+	# by a single cell was instant death with nothing to react to.
+	#
+	# So the shaft moved left and the spike moved to the far wall, leaving four
+	# cells of ice as runoff. Overshooting is still fatal, but there are now
+	# 0.4-0.7s between clearing the shaft and reaching the spike, against roughly
+	# 0.1s before — enough to see the mistake and flip out of it, which is the
+	# difference between hard and a wall.
 	{"name": "Well", "par": 5, "map": [
 		"#############",
 		"#O..........#",
-		"#IIIIIIII.^^#",
-		"#########.###",
-		"#########.###",
-		"#########.###",
+		"#IIIII.IIII^#",
+		"######.######",
+		"######.######",
+		"######.######",
 		"#...........#",
 		"#...........#",
 		"#...........#",
