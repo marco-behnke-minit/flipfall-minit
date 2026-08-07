@@ -64,6 +64,11 @@ const GRAVITY := 1100.0   # px/s^2
 const MAX_SPEED := 900.0  # px/s
 const REST_SPEED := 14.0  # px/s, below this while touching = at rest
 const SUBSTEP := 1.0 / 240.0
+## Unbroken contact with sticky for this long is fatal. Sticky can only ever slow
+## the orb, and slowing cannot threaten — flipping away ends contact immediately,
+## so escape always costs exactly one rotation. The tile reads as a hazard, so it
+## is made one: brush it and live, settle on it and die.
+const STICKY_DEATH := 0.25
 
 # The room tumbles to keep gravity pointing screen-down.
 const TUMBLE_SECONDS := 0.24

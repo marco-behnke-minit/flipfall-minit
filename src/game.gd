@@ -441,6 +441,9 @@ func _on_death(cause: String) -> void:
 	if cause == "spike":
 		_stats["spike_deaths"] = int(_stats["spike_deaths"]) + 1
 		_feedback.show_negative("Spiked!")
+	elif cause == "stuck":
+		_stats["stuck_deaths"] = int(_stats["stuck_deaths"]) + 1
+		_feedback.show_negative("Stuck!")
 	else:
 		_stats["out_deaths"] = int(_stats["out_deaths"]) + 1
 		_feedback.show_negative("Fell Out!")

@@ -46,6 +46,7 @@ static func empty_stats() -> Dictionary:
 	return {
 		"spike_deaths": 0,
 		"out_deaths": 0,
+		"stuck_deaths": 0,
 		"retries": 0,
 		"fastest": {},   # { name, seconds }
 		"messiest": {},  # { name, rotations }
@@ -58,7 +59,8 @@ static func empty_stats() -> Dictionary:
 static func flavor_text(stats: Dictionary, levels_cleared: int, total_levels: int) -> String:
 	var spikes: int = stats["spike_deaths"]
 	var outs: int = stats["out_deaths"]
-	var fails := spikes + outs
+	var stuck: int = stats.get("stuck_deaths", 0)
+	var fails := spikes + outs + stuck
 	var c: Array = []
 
 	if fails == 0 and levels_cleared == total_levels:
@@ -67,6 +69,8 @@ static func flavor_text(stats: Dictionary, levels_cleared: int, total_levels: in
 		c.append([9, "Impaled %d times" % spikes])
 	if outs >= 2:
 		c.append([9, "Fell out of the room %d times" % outs])
+	if stuck >= 2:
+		c.append([9, "Caught in the tar %d times" % stuck])
 	if spikes == 1 and outs == 1:
 		c.append([8, "One spike, one long fall"])
 	var messiest: Dictionary = stats["messiest"]
@@ -80,6 +84,8 @@ static func flavor_text(stats: Dictionary, levels_cleared: int, total_levels: in
 		c.append([4, "Died on the spikes once"])
 	if outs == 1:
 		c.append([4, "Slipped out of the room once"])
+	if stuck == 1:
+		c.append([4, "Held down by the tar once"])
 	var fastest: Dictionary = stats["fastest"]
 	if not fastest.is_empty():
 		c.append([3, "%s cracked in %.1fs" % [fastest["name"], fastest["seconds"]]])

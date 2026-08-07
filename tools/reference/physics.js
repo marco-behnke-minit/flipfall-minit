@@ -4,7 +4,7 @@
 //
 // Coordinates here are playfield-local: (0,0) .. (PF_SIZE, PF_SIZE).
 // ---------------------------------------------------------------------------
-import { CELL, GRID, ORB_R, GRAVITY, MAX_SPEED, REST_SPEED } from './constants.js';
+import { CELL, GRID, ORB_R, GRAVITY, MAX_SPEED, REST_SPEED, STICKY_DEATH } from './constants.js';
 
 // Gravity states, in clockwise order: dir=+1 steps clockwise through them
 // (Down → Left → Up → Right). Note that the ↺ *button* sends dir=+1, because
@@ -86,7 +86,8 @@ export function createWorld(level) {
     buttons: new Set(),
     doorsOpen: new Set(),
     status: 'playing', // 'playing' | 'clear' | 'dead'
-    cause: null, // 'spike' | 'out'
+    cause: null, // 'spike' | 'out' | 'stuck'
+    stickyTime: 0, // unbroken seconds touching sticky; STICKY_DEATH is fatal
     contact: null, // material kind touched this step, for sfx / rendering
     resting: false,
     events: [], // drained by the caller each frame
@@ -103,6 +104,7 @@ export function createWorld(level) {
   w.orb.vy = 0;
   w.status = 'playing';
   w.cause = null;
+  w.stickyTime = 0; // the settle loop may have parked it on sticky; that is not a death
   w.events.length = 0;
   w.time = 0;
   w.rotations = 0;
@@ -205,6 +207,7 @@ function substep(w, dt) {
   }
 
   w.contact = contactKind;
+  w.stickyTime = contactKind === 'sticky' ? w.stickyTime + dt : 0;
   w.resting = touched && Math.hypot(o.vx, o.vy) < REST_SPEED;
   if (hardest > 150) w.events.push({ type: 'impact', speed: hardest, kind: contactKind });
 
@@ -236,6 +239,14 @@ function substep(w, dt) {
         }
       }
     }
+  }
+
+  // --- held too long in the tar ---
+  // After the exit check, so touching E on the fatal step still counts as a win.
+  if (w.stickyTime >= STICKY_DEATH) {
+    w.status = 'dead';
+    w.cause = 'stuck';
+    return;
   }
 
   // --- fell out of the level ---

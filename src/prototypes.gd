@@ -116,14 +116,17 @@ const ALL := [
 	# identical 180ms window as stone or ice. Lining both faces would be the same
 	# decorative purple, just relocated, so the ceiling is stone.
 	#
-	# The creep still works, at about 0.18 cells per flip-pair against 0.62 on
-	# stone and 0.87 on ice — roughly 30 rotations against a par of 2, which the
-	# scoring charges at 25 points each. Walkable, and expensive.
+	# Under the tar rule both failures now kill: stop short and you settle on the
+	# sticky and are held until it takes you, overshoot and the spikes do. The
+	# spawn tile is stone on purpose — sticky there killed the player for thinking.
+	#
+	# It also ends the creep here. Walking the orb along the sticky means resting
+	# on it, and resting on it is fatal, so the cheap route is simply gone.
 	{"name": "Pothole", "par": 2, "map": [
 		"#############",
 		"#############",
 		"#O........^^#",
-		"#TTT....TTTT#",
+		"##TT....TTTT#",
 		"####....#####",
 		"####....#####",
 		"####....#####",

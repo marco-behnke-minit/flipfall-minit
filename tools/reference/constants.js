@@ -39,6 +39,11 @@ export const GRAVITY = 1100; // px/s^2
 export const MAX_SPEED = 900; // px/s
 export const REST_SPEED = 14; // px/s, below this while touching = at rest
 export const SUBSTEP = 1 / 240;
+// Unbroken contact with sticky for this long is fatal. Sticky can only ever slow
+// the orb, and slowing cannot threaten — flipping away ends contact immediately,
+// so escape always costs exactly one rotation. The tile reads as a hazard, so it
+// is made one: brush it and live, settle on it and die.
+export const STICKY_DEATH = 0.25;
 
 // Run rules.
 export const ATTEMPTS = 3;

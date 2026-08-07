@@ -43,7 +43,8 @@ var gravity: int = DOWN
 var buttons: Dictionary = {}    # set of pressed button chars
 var doors_open: Dictionary = {} # set of opened door chars
 var status: String = "playing"  # "playing" | "clear" | "dead"
-var cause: String = ""          # "spike" | "out"
+var cause: String = ""          # "spike" | "out" | "stuck"
+var sticky_time: float = 0.0    # unbroken seconds touching sticky; STICKY_DEATH is fatal
 var contact: String = ""        # material kind touched this step, for sfx / rendering
 var resting: bool = false
 var events: Array[Dictionary] = []  # drained by the caller each frame
@@ -121,6 +122,7 @@ func _init(level: Dictionary) -> void:
 	vy = 0.0
 	status = "playing"
 	cause = ""
+	sticky_time = 0.0  # the settle loop may have parked it on sticky; that is not a death
 	events.clear()
 	time = 0.0
 	rotations = 0
@@ -271,6 +273,7 @@ func _substep(dt: float) -> void:
 		vy *= f
 
 	contact = contact_kind
+	sticky_time = sticky_time + dt if contact_kind == "sticky" else 0.0
 	resting = touched and hypot(vx, vy) < Const.REST_SPEED
 	if hardest > 150.0:
 		events.append({"type": "impact", "speed": hardest, "kind": contact_kind})
@@ -299,6 +302,13 @@ func _substep(dt: float) -> void:
 					status = "clear"
 					events.append({"type": "clear", "c": c, "r": r})
 					return
+
+	# --- held too long in the tar ---
+	# After the exit check, so touching E on the fatal step still counts as a win.
+	if sticky_time >= Const.STICKY_DEATH:
+		status = "dead"
+		cause = "stuck"
+		return
 
 	# --- fell out of the level ---
 	var pad := Const.CELL * 1.5
