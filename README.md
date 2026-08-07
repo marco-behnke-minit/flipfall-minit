@@ -317,8 +317,9 @@ Bundled third-party material keeps its own terms, listed in
 `THIRD-PARTY-NOTICES.md`: the Minit Games SDK addon (MIT, Drop GmbH), and the
 Lato and Bowlby One SC fonts (SIL OFL).
 
-One caveat worth reading before making this repository public:
-`assets/audio/loop.mp3` arrived from the HTML5 project with **no recorded
-provenance**, so its licence is unknown and the MIT grant does not extend to it.
-The game degrades gracefully without it — `src/audio.gd` warns and plays on in
-silence, and every sound effect is synthesised at runtime.
+One caveat, and it gates both publishing this repository and shipping the game:
+`assets/audio/loop.mp3` was generated on Suno's **Basic (free) plan**, where
+Suno owns the song and use is non-commercial only. It is not ours to
+redistribute, so the MIT grant does not extend to it — keep this repository
+private while the file is in it. The game degrades gracefully without the track;
+every sound effect is synthesised at runtime.

@@ -40,21 +40,37 @@ A web export embeds the Godot engine runtime. Godot is MIT licensed
 its own copyright notice into the build. Nothing in this repository contains
 engine source.
 
-## Music — LICENCE NOT ESTABLISHED
+## Music — Suno Basic plan, NON-COMMERCIAL ONLY, NOT REDISTRIBUTABLE
 
-`assets/audio/loop.mp3` (5 m 09 s, 5.0 MB) came across from the HTML5 project,
-which recorded no provenance for it: the placeholder it replaced only said
-"drop the music loop here", and the shipped file does not match that note's
-spec. **Its licence and origin are unknown to this repository.**
+`assets/audio/loop.mp3` was generated with [Suno](https://suno.com) on the
+**Basic (free) plan**. Under Suno's terms for that tier:
 
-Consequences, until that is resolved:
+- **Suno owns the song.** The account holder does not.
+- Use is permitted for **non-commercial purposes only**.
+- Subscribing to a paid plan later does **not** grant rights retroactively to
+  songs made on the free plan; Suno considers that case by case.
 
-- The MIT grant in `LICENSE` does **not** extend to this file.
-- Do not treat this repository as redistributable in full, and take care before
-  making it public.
+Two consequences, and neither is about this repository's own code:
 
-To resolve: confirm the source and terms, add them here, and either keep the
-file or replace it with one whose licence is known. If it turns out to be
-unlicensed for redistribution, removing it degrades gracefully — `src/audio.gd`
-warns and plays on in silence, and every sound effect is synthesised at runtime
-rather than loaded.
+1. **It is not ours to redistribute.** The MIT grant in `LICENSE` does not
+   extend to this file, and a public repository would be offering others rights
+   the account holder does not hold. Keep the repository private while this file
+   is in it — noting it is in git history from the first commit, so removing it
+   from the tip is not enough to undo that.
+
+2. **It likely cannot ship commercially.** Publishing on a platform where
+   creators can earn is hard to characterise as non-commercial use. That needs
+   settling before release, not after.
+
+The clean fix is to regenerate the track while subscribed to Pro or Premier, so
+the song is owned outright with a commercial licence — or to replace it with one
+whose terms are already clear.
+
+Removing it degrades gracefully and is a real option: with the file gone the
+game still boots, fires `loading_done` and `report_result`, and raises no
+errors. Every sound effect is synthesised at runtime; music is the only asset.
+
+Sources: Suno, [Do I have the copyrights to songs I
+made?](https://help.suno.com/en/articles/2746945) and [If I subscribe, do I get
+rights for the songs I made before
+subscribing?](https://help.suno.com/en/articles/2425729)
