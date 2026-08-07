@@ -7,8 +7,59 @@
 // rest-only solvable — you can let the orb settle before every flip, so nothing
 // can be failed through execution. So the bar each candidate has to clear is
 // "NOT rest-only solvable", with a timing window a human can actually hit.
-import { solveRestOnly, solveTimed, play } from './reference/search.js';
+import {
+  solveRestOnly, solveTimed, play,
+  cloneWorld, advance, clearsUntouched, HORIZON,
+} from './reference/search.js';
+import { rotate } from './reference/physics.js';
+import { createWorld } from './reference/physics.js';
 import { validateLevels, GRID } from './lib/levels.mjs';
+
+/**
+ * The window on EACH flip of a route, not just the tightest.
+ *
+ * slackOf() in the reference search computes these and then reports only the
+ * minimum, which hides where a room is actually hard: one knife-edge flip among
+ * four generous ones plays completely differently from four medium ones. Same
+ * probe, kept per step. `null` means the flip is taken at rest — no timing.
+ */
+function stepWindows(level, path) {
+  const w = createWorld(level);
+  const windows = [];
+
+  path.forEach((step, idx) => {
+    const wait = step.wait === 'rest' ? 0 : step.wait;
+    const probeState = cloneWorld(w);
+    advance(probeState, wait);
+
+    if (probeState.resting) {
+      windows.push(null);
+    } else {
+      const probe = (t) => {
+        if (t < 0) return false;
+        const test = cloneWorld(w);
+        advance(test, t);
+        if (test.status !== 'playing') return false;
+        rotate(test, step.dir);
+        for (const rem of path.slice(idx + 1)) {
+          advance(test, rem.wait === 'rest' ? HORIZON : rem.wait);
+          if (test.status !== 'playing') break;
+          rotate(test, rem.dir);
+        }
+        return clearsUntouched(test);
+      };
+      let lo = wait;
+      let hi = wait;
+      for (let d = 0.025; d <= 1.5; d += 0.025) { if (probe(wait - d)) lo = wait - d; else break; }
+      for (let d = 0.025; d <= 1.5; d += 0.025) { if (probe(wait + d)) hi = wait + d; else break; }
+      windows.push(hi - lo);
+    }
+
+    advance(w, wait);
+    rotate(w, step.dir);
+  });
+  return windows;
+}
 
 // A hole in a floor is only reachable by a timed flip when it is NOT against a
 // wall: the orb can always fly to a wall and stop there for free, so any target
@@ -142,6 +193,9 @@ const PROTOTYPES = [
   },
 ];
 
+// `node tools/prototypes.mjs Overhead` prints one room's route step by step.
+const only = process.argv[2];
+
 const problems = validateLevels(PROTOTYPES, {expectFullSet: false});
 if (problems.length) {
   console.error('prototype authoring problems:');
@@ -151,6 +205,7 @@ if (problems.length) {
 console.log(`${PROTOTYPES.length} prototypes, all ${GRID}x${GRID} and valid\n`);
 
 for (const level of PROTOTYPES) {
+  if (only && !level.name.toLowerCase().startsWith(only.toLowerCase())) continue;
   console.log(`${level.name}`);
   console.log(`  ${level.idea}`);
 
@@ -176,6 +231,20 @@ for (const level of PROTOTYPES) {
       + (fast.truncated ? '  [search truncated]' : ''));
   } else {
     console.log(`  timed:      ${fast.reason}`);
+  }
+
+  if (only && fast.ok) {
+    const windows = stepWindows(level, fast.best.path);
+    console.log('\n  the forgiving route, flip by flip:');
+    fast.best.path.forEach((s, i) => {
+      const w = windows[i];
+      const verdict = w === null ? 'at rest, no timing'
+        : w >= 0.25 ? `${(w*1000).toFixed(0)}ms  comfortable`
+        : w >= 0.15 ? `${(w*1000).toFixed(0)}ms  tight but fair`
+        : `${(w*1000).toFixed(0)}ms  UNFAIR`;
+      console.log(`    ${i + 1}. wait ${(s.wait*1000).toFixed(0).padStart(4)}ms  ->  ` +
+                  `press ${s.dir > 0 ? 'CCW' : 'CW '}   ${verdict}`);
+    });
   }
   console.log('');
 }
