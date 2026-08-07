@@ -46,6 +46,49 @@ extends RefCounted
 ##     to visibly change what happens, not just widen a number.
 
 const ALL := [
+	# The answer to "the purple traps are harmless": they are, and this is why.
+	#
+	# Gravity parallel to a surface never presses the orb into it, so flying past
+	# sticky costs nothing — the same reason ice underfoot changes nothing when you
+	# are airborne. Sticky only bites on the flip that drives you INTO it.
+	#
+	# So the room is a run, not a fall. Flip right and the orb accelerates freely
+	# down a corridor lined with sticky; the gap in the floor is too far to coast
+	# to, and at full speed the orb skims straight over it like a wheel over a
+	# pothole. The only way in is to flip down EARLY and let the sticky bleed off
+	# exactly enough speed to arrive slow enough to drop. Too early and it stops
+	# short; too late and the spikes at the end have you.
+	#
+	#   flip down after   500-680ms   180ms wide, and 25 of 281 timings are lethal
+	#
+	# Sticky is load-bearing here, and it is the hardest of the three materials
+	# precisely because it brakes hardest — swapping the floor to stone widens the
+	# window to 270ms, ice to 505ms.
+	#
+	# NOTE ON "one is top and one is bottom": measured, and it does not hold. Only
+	# the face you flip into ever does anything — a sticky ceiling here gives the
+	# identical 180ms window as stone or ice. Lining both faces would be the same
+	# decorative purple, just relocated, so the ceiling is stone.
+	#
+	# The creep still works, at about 0.18 cells per flip-pair against 0.62 on
+	# stone and 0.87 on ice — roughly 30 rotations against a par of 2, which the
+	# scoring charges at 25 points each. Walkable, and expensive.
+	{"name": "Pothole", "par": 2, "map": [
+		"#############",
+		"#############",
+		"#O........^^#",
+		"#TTT....TTTT#",
+		"####....#####",
+		"####....#####",
+		"####....#####",
+		"####...E#####",
+		"#############",
+		"#############",
+		"#############",
+		"#############",
+		"#############",
+	]},
+
 	# Rejected. The same room as the shipped Trapdoor but on stone instead of ice.
 	# Playtested as "nearly the exact same room", and the creep is why: alternating
 	# gravity walks the orb along either surface, so the floor material changes
