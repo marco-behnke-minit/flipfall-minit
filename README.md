@@ -71,6 +71,19 @@ godot --path . -- --attempts=9 --startLevel=31 --endLevel=40   # the insane tier
 godot --path . -- --startLevel=22 --endLevel=22                # one room
 ```
 
+There is one more override, for design work rather than configuration:
+
+```bash
+godot --path . -- --rooms=prototypes --attempts=9
+```
+
+That swaps `src/levels.gd` for the scratch rooms in `src/prototypes.gd` — the
+candidates being tested against the difficulty problem, measured by
+`node tools/prototypes.mjs`. They are not the game, nothing about the shipped
+set moves to accommodate them, and like every other override it is inert in a
+web export. The nine attempts are worth passing: the last three rooms are
+deliberately too tight and exist only for comparison.
+
 From the editor, put the same arguments after `--` in **Project Settings →
 Editor → Run → Main Run Args**. The game prints a line on startup when an
 override is active, so a test run can't be mistaken for the shipped defaults.
@@ -289,6 +302,7 @@ reference engine invalidates all forty.
 
     src/constants.gd    design surface, layout, tuning, config declaration
     src/levels.gd       the forty rooms, sorted by difficulty, + a validator
+    src/prototypes.gd   scratch rooms for design work, not shipped
     src/sim.gd          orb simulation (node-free, verified against the JS)
     src/score.gd        scoring + flavor text (pure)
     src/game.gd         state machine, input, Minit lifecycle

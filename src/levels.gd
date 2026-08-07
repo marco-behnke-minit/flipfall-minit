@@ -685,14 +685,17 @@ const ALL := [
 
 ## Sanity-check every level's shape and contents. Pushes an error on an
 ## authoring slip and returns false, so a bad edit is loud rather than silent.
-static func validate() -> bool:
+##
+## Takes a room set, because src/prototypes.gd holds scratch rooms that get the
+## same authoring checks without having to fill the tier structure.
+static func validate(rooms: Array = ALL, expect_full_set: bool = true) -> bool:
 	var ok := true
-	if ALL.size() != Const.LEVEL_COUNT:
-		push_error("%d rooms, but the tier structure declares %d" % [ALL.size(), Const.LEVEL_COUNT])
+	if expect_full_set and rooms.size() != Const.LEVEL_COUNT:
+		push_error("%d rooms, but the tier structure declares %d" % [rooms.size(), Const.LEVEL_COUNT])
 		ok = false
 
-	for i in ALL.size():
-		var lvl: Dictionary = ALL[i]
+	for i in rooms.size():
+		var lvl: Dictionary = rooms[i]
 		var where := "level %d (\"%s\")" % [i + 1, lvl["name"]]
 		var rows: Array = lvl["map"]
 		if rows.size() != Const.GRID:

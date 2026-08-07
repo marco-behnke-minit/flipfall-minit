@@ -46,6 +46,7 @@ var _panel_rotations := 0
 var _panel_score := 0
 
 # --- run state --------------------------------------------------------------
+var _rooms: Array = Levels.ALL
 var _level_index := 0
 var _attempts := 3
 var _score := 0
@@ -84,13 +85,19 @@ var _flying_points := 0
 
 
 func _ready() -> void:
-	Levels.validate()
+	# `-- --rooms=prototypes` swaps in the scratch rooms from src/prototypes.gd.
+	# They are design work, not the game, so nothing about the shipped set moves
+	# to accommodate them and the flag is inert in a web export.
+	if parse_override(OS.get_cmdline_user_args(), "rooms") == "prototypes":
+		_rooms = Prototypes.ALL
+		print("[flipfall] PROTOTYPE ROOMS (%d) — not the shipped set" % _rooms.size())
+	Levels.validate(_rooms, _rooms.size() == Const.LEVEL_COUNT)
 
 	_start_attempts = _config_number("attempts")
 	# The drop plays a segment of the room list: 1-10 easy, 11-20 medium,
 	# 21-30 hard, 31-40 insane. Locked against mods in meta.json.
-	_start_level = mini(Levels.ALL.size(), _config_number("startLevel")) - 1
-	_end_level = maxi(_start_level, mini(Levels.ALL.size(), _config_number("endLevel")) - 1)
+	_start_level = mini(_rooms.size(), _config_number("startLevel")) - 1
+	_end_level = maxi(_start_level, mini(_rooms.size(), _config_number("endLevel")) - 1)
 	_segment_size = _end_level - _start_level + 1
 
 	_level_index = _start_level
@@ -106,10 +113,10 @@ func _ready() -> void:
 			break
 
 	_panel_attempts = _header.add_panel("Attempts", _start_attempts)
-	_panel_rotations = _header.add_panel("Rotations", "0 / %d" % Levels.ALL[_start_level]["par"])
+	_panel_rotations = _header.add_panel("Rotations", "0 / %d" % _rooms[_start_level]["par"])
 	_panel_score = _header.add_panel("Score", 0, "right")
 
-	_world = Sim.new(Levels.ALL[_start_level])
+	_world = Sim.new(_rooms[_start_level])
 	_snap_tumble(_world.gravity)
 	_room.world = _world
 	_push_level_label()
@@ -267,19 +274,19 @@ func _snap_tumble(gravity_index: int) -> void:
 # --- level lifecycle --------------------------------------------------------
 
 func _arm_level(index: int) -> void:
-	_world = Sim.new(Levels.ALL[index])
+	_world = Sim.new(_rooms[index])
 	_room.world = _world
 	_trail.clear()
 	_exit_cell = Vector2i(-1, -1)
 	_snap_tumble(_world.gravity)  # a new room opens upright, never mid-turn
 	_phase = "armed"
 	_phase_t = 0.0
-	_header.set_value(_panel_rotations, "0 / %d" % Levels.ALL[index]["par"])
+	_header.set_value(_panel_rotations, "0 / %d" % _rooms[index]["par"])
 	_push_level_label()
 
 
 func _push_level_label() -> void:
-	var level: Dictionary = Levels.ALL[_level_index]
+	var level: Dictionary = _rooms[_level_index]
 	_label.set_level(_level_index - _start_level, _segment_size, String(level["name"]),
 		Const.tier_of(_level_index))
 
@@ -342,7 +349,7 @@ func _do_rotate(dir: int) -> void:
 	_start_tumble(_world.gravity)
 	# Gravity now reads as screen-down, so the whoosh always streams downward.
 	_particles.whoosh(_orb_screen(), Const.ORB_R + 12.0, Vector2(0, 1), Const.C_ORB)
-	_header.set_value(_panel_rotations, "%d / %d" % [_world.rotations, Levels.ALL[_level_index]["par"]])
+	_header.set_value(_panel_rotations, "%d / %d" % [_world.rotations, _rooms[_level_index]["par"]])
 
 
 func _do_retry() -> void:
@@ -371,7 +378,7 @@ func _lose_attempt(reason: String) -> void:
 # --- level outcomes ---------------------------------------------------------
 
 func _on_level_clear() -> void:
-	var level: Dictionary = Levels.ALL[_level_index]
+	var level: Dictionary = _rooms[_level_index]
 	var bonus := Score.time_bonus(_world.time)
 	var gained := Score.level_score(_world.rotations, _world.time)
 
