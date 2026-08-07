@@ -46,6 +46,44 @@ extends RefCounted
 ##     to visibly change what happens, not just widen a number.
 
 const ALL := [
+	# The slalom. Sticky is SOLID — it is a block, not a coating — so a patch in a
+	# lane seals it rather than slowing anything that passes. That is what makes
+	# this shape work where a two-lane corridor cannot: at two lanes a patch leaves
+	# a 60px gap for a 44px orb and the answer is forced, with no line down the
+	# middle to be skilled about.
+	#
+	# At THREE lanes with the outer two patched alternately, both routes exist:
+	#
+	#   SAFE      ride a wall, and switch lanes before each patch seals your lane.
+	#   SKILLED   hold the middle channel and cross without touching anything. It
+	#             is a 16.5px band centred on row 6.5 — the whole geometric slack
+	#             of a 44px orb in a 60px channel, and not a pixel more.
+	#
+	# Reaching that band is the hard part, not holding it. Gravity along the
+	# corridor does not cancel vertical speed, so a level run needs vy = 0 at the
+	# moment of the flip: rise, arrest the rise, and turn at the apex. That is the
+	# two-flips-in-the-air control, with the corridor as the thing it is FOR.
+	# A spike leads each patch, so riding a lane into a sealed section impales you
+	# rather than merely parking you against it — the playtest note that a room you
+	# cannot lose in is "not hard, just annoying". The exit sits at the far end of
+	# the middle lane, which both routes can reach: the middle line arrives head on,
+	# and a wall rider drops through it on the way past.
+	{"name": "Slalom", "par": 3, "map": [
+		"#############",
+		"#############",
+		"#############",
+		"#############",
+		"#############",
+		"#..^TT......#",
+		"#O.........E#",
+		"#.....^TT...#",
+		"#############",
+		"#############",
+		"#############",
+		"#############",
+		"#############",
+	]},
+
 	# The answer to "the purple traps are harmless": they are, and this is why.
 	#
 	# Gravity parallel to a surface never presses the orb into it, so flying past
