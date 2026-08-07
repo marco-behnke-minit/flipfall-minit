@@ -15,16 +15,27 @@ func _check(label: String, got, want) -> void:
 
 
 func _initialize() -> void:
-	# +1000 per room, +max(0, 200 - seconds*10), -5 per rotation.
+	# +1000 per room, plus max(0, 200 - seconds*10) for speed.
 	_check("time_bonus(0s)", Score.time_bonus(0.0), 200)
 	_check("time_bonus(8s)", Score.time_bonus(8.0), 120)
 	_check("time_bonus(20s)", Score.time_bonus(20.0), 0)
 	_check("time_bonus(45s) floors at 0", Score.time_bonus(45.0), 0)
-	_check("level_score(3 rot, 8s)", Score.level_score(3, 8.0), 1105)
-	_check("level_score(0 rot, 0s)", Score.level_score(0, 0.0), 1200)
-	# +500 per Attempt still in hand.
-	_check("final_score(10000, 3)", Score.final_score(10000, 3), 11500)
-	_check("final_score never negative", Score.final_score(0, -2), 0)
+	# Rotations are scored against par: +40 each saved, -25 each wasted.
+	_check("at par", Score.rotation_score(4, 4), 0)
+	_check("two under par", Score.rotation_score(2, 4), 80)
+	_check("three over par", Score.rotation_score(7, 4), -75)
+	# Creeping a par-4 room in 24 rotations should hurt.
+	_check("crept, 20 rotations over", Score.rotation_score(24, 4), -500)
+
+	_check("level_score(at par, 8s)", Score.level_score(4, 8.0, 4), 1120)
+	_check("level_score(perfect line)", Score.level_score(2, 0.0, 4), 1280)
+	_check("level_score(crept)", Score.level_score(24, 30.0, 4), 500)
+	_check("level_score never negative", Score.level_score(60, 60.0, 1), 0)
+
+	# +500 per Attempt still in hand, -150 per death.
+	_check("final_score(10000, 3, no deaths)", Score.final_score(10000, 3, 0), 11500)
+	_check("final_score(10000, 3, 4 deaths)", Score.final_score(10000, 3, 4), 10900)
+	_check("final_score never negative", Score.final_score(0, -2, 9), 0)
 
 	# Flavor text reports a session moment, never the score.
 	var flawless := Score.empty_stats()

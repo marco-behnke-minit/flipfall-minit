@@ -53,7 +53,28 @@ const MECHANICS = [
   ['ice', (m) => (m.flat.match(/I/g) ?? []).length >= 5],
   ['sticky', (m) => /T/.test(m.flat)],
   ['edges', (m) => m.openEdges >= 3],
+  // Spikes hanging from a ceiling rather than lying on a floor. No shipped room
+  // used them; the two that do are the ones that playtested best, because the
+  // reflex flip-up at a wall is fatal and the climb has to be committed. Last in
+  // the order because it is the newest thing the game asks for.
+  ['ceiling', (m) => m.ceilingSpikes > 0],
 ];
+
+/** Spikes with something solid directly above them — a hazard you rise into. */
+function countCeilingSpikes(level) {
+  const solid = (c, r) => {
+    if (c < 0 || r < 0 || c >= GRID || r >= GRID) return false;
+    const ch = level.map[r][c];
+    return ch === '#' || ch === 'I' || ch === 'T' || /[abc]/.test(ch);
+  };
+  let n = 0;
+  for (let r = 0; r < GRID; r++) {
+    for (let c = 0; c < GRID; c++) {
+      if (level.map[r][c] === '^' && solid(c, r - 1) && !solid(c, r + 1)) n++;
+    }
+  }
+  return n;
+}
 
 function measure(level) {
   const flat = level.map.join('');
@@ -73,6 +94,7 @@ function measure(level) {
     flat,
     openEdges,
     spikes: (flat.match(/\^/g) ?? []).length,
+    ceilingSpikes: countCeilingSpikes(level),
     restOnly,
     rotations: restOnly ? s.rest.rotations : (s.fast.ok ? s.fast.best.rotations : 0),
   };

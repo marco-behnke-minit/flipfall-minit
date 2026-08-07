@@ -8,7 +8,8 @@
 //   +time  max(0, 200 - seconds * 10) per room, timed from the first rotation
 // ---------------------------------------------------------------------------
 import {
-  PTS_PER_LEVEL, PTS_PER_ATTEMPT, PTS_PER_ROTATION,
+  PTS_PER_LEVEL, PTS_PER_ATTEMPT, PTS_PER_ROTATION_UNDER_PAR,
+  PTS_PER_ROTATION_OVER_PAR, PTS_PER_DEATH,
   TIME_BONUS_BASE, TIME_BONUS_DECAY,
 } from './constants.js';
 
@@ -16,14 +17,22 @@ export function timeBonus(seconds) {
   return Math.max(0, Math.round(TIME_BONUS_BASE - seconds * TIME_BONUS_DECAY));
 }
 
+/** Rotations against par: a reward for beating the committed route, a cost past it. */
+export function rotationScore(rotations, par) {
+  const saved = par - rotations;
+  return saved >= 0 ? saved * PTS_PER_ROTATION_UNDER_PAR : saved * PTS_PER_ROTATION_OVER_PAR;
+}
+
 /** Points banked for clearing one room. */
-export function levelScore(rotations, seconds) {
-  return Math.max(0, PTS_PER_LEVEL + timeBonus(seconds) + rotations * PTS_PER_ROTATION);
+export function levelScore(rotations, seconds, par) {
+  return Math.max(0, PTS_PER_LEVEL + timeBonus(seconds) + rotationScore(rotations, par));
 }
 
 /** Final total: everything banked, plus the unspent Attempts. */
-export function finalScore(bankedPoints, attemptsLeft) {
-  return Math.max(0, bankedPoints + Math.max(0, attemptsLeft) * PTS_PER_ATTEMPT);
+export function finalScore(bankedPoints, attemptsLeft, deaths = 0) {
+  return Math.max(0, bankedPoints
+    + Math.max(0, attemptsLeft) * PTS_PER_ATTEMPT
+    + Math.max(0, deaths) * PTS_PER_DEATH);
 }
 
 export function emptyStats() {

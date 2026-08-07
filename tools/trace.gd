@@ -42,7 +42,7 @@ func _initialize() -> void:
 		for s in impacts:
 			impact_sum += s
 
-		print(" ".join(PackedStringArray([
+		print("|".join(PackedStringArray([
 			"%02d" % (i + 1),
 			String(level["name"]),
 			w.status,

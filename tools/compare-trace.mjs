@@ -8,7 +8,7 @@
 //
 //   node tools/compare-trace.mjs
 //
-// Both engines run the same scripted rotation schedule through all forty rooms.
+// Both engines run the same scripted rotation schedule through every room.
 // Discrete outcomes (status, cause, buttons pressed, rotations, impact count)
 // must match exactly; positions and velocities are allowed a small tolerance,
 // because V8 and the platform libm round exp() differently in the last place and
@@ -16,6 +16,7 @@
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { LEVEL_COUNT } from './lib/levels.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const project = resolve(here, '..');
@@ -34,14 +35,14 @@ const DISCRETE = new Set(['name', 'status', 'cause', 'rotations', 'buttons', 'im
 const run = (cmd, args) =>
   execFileSync(cmd, args, { cwd: project, encoding: 'utf8', maxBuffer: 1 << 24 })
     .split('\n')
-    .filter((l) => /^\d\d /.test(l))
-    .map((l) => Object.fromEntries(l.trim().split(/\s+/).map((v, i) => [FIELDS[i], v])));
+    .filter((l) => /^\d\d\|/.test(l))
+    .map((l) => Object.fromEntries(l.trim().split('|').map((v, i) => [FIELDS[i], v])));
 
 const js = run(process.execPath, ['tools/trace_js.mjs']);
 const gd = run(GODOT, ['--headless', '--script', 'res://tools/trace.gd']);
 
-if (js.length !== 40 || gd.length !== 40) {
-  console.error(`expected 40 rooms from each engine, got js=${js.length} gd=${gd.length}`);
+if (js.length !== LEVEL_COUNT || gd.length !== LEVEL_COUNT) {
+  console.error(`expected ${LEVEL_COUNT} rooms from each engine, got js=${js.length} gd=${gd.length}`);
   process.exit(1);
 }
 

@@ -24,8 +24,9 @@ godot --headless --script res://tools/test_config.gd  # config coercion + clampi
 godot --headless --script res://tools/test_music.gd   # the music is actually wired up
 node tools/check-meta.mjs                        # meta.json: schema + semantic
 node tools/test-schema.mjs                       # the schema validator itself
-node tools/difficulty.mjs                        # rank rooms vs their tier
-node tools/difficulty.mjs --order                # the shipping order it implies
+node tools/curve.mjs                             # the learning-curve order
+node tools/creep-check.mjs                       # which rooms can be walked home
+node tools/mechanics.mjs                         # what the rooms actually exercise
 godot --script res://tools/gallery.gd --resolution 960x1480   # one still per room
 godot --script res://tools/fade_check.gd --resolution 480x1200 # fade at a phone aspect
 godot --script res://tools/measure_stall.gd --resolution 960x1480 # frame spike at the first pop
@@ -182,31 +183,59 @@ Horizontally the design box is simply centred, and `src/background.gd` is the
 only node that reads `get_viewport_rect()`, painting the full revealed area so no
 unpainted strip can appear at an edge.
 
+## Scoring
+
+Every room can be finished by **creeping** — alternating gravity walks the orb
+along any surface a fraction of a cell at a time, needing no timing at all
+(`tools/creep-check.mjs` confirms this of all 45). That is deliberately left in:
+working a mechanic out and mastering it is the satisfying part, and a stuck
+player should always have a way home.
+
+So difficulty lives in the score, not in pass/fail:
+
+| | |
+| --- | --- |
+| +1000 | per room cleared |
+| +500 | per Attempt still in hand at the end |
+| +200 | time bonus per room, draining 10 a second |
+| **+40** | **per rotation under par** |
+| **−25** | **per rotation over par** |
+| **−150** | **per death** |
+
+`par` is the committed route the solver found, which makes it the natural
+benchmark: under par means you took the line, far over means you walked it.
+Creeping a par-4 room in 24 rotations costs 500 points against a clean 1120 —
+a visible sacrifice rather than the 21% it cost when rotations were a flat −5.
+
 ## Room order
 
-`src/levels.gd` is sorted by measured difficulty, ascending, and the four tiers
-are simply the four tenths of that order — so a drop that publishes a segment
-gets a band that actually rises as it is played.
+45 rooms, ordered as a **learning curve** rather than a difficulty ranking —
+`tools/curve.mjs` produces the order and `src/levels.gd` carries it.
 
-The ordering came out of `tools/difficulty.mjs`, which scores three independent
-axes from the solver's cache: route length, whether a timing window is required
-at all, and how lethal the room is. `par` alone measures only the first, and
-sorting on it had left the tiers overlapping badly:
+A monotonic ramp is the wrong shape. Difficulty is not a property of a room, it
+is a property of a room *given what the player already knows*: a room the solver
+called frame-perfect was cleared first try because its neighbour had taught the
+move, and ice rooms went from hard to easy the moment ice was understood. So the
+shape is a sawtooth — introduce a mechanic, ramp up the rooms using it, let
+mastery make them feel easy, then reset with something new. **Only the rise is
+authored; the fall happens in the player.**
 
-| | before | after |
+| block | rooms | |
 | --- | --- | --- |
-| strict inversions (easier-tier room beating a harder-tier one on every axis) | 17 | **0** |
-| rooms in the wrong tenth | 20 | **2** |
-| backward difficulty steps within tiers | 12 | **0** |
-| avg par by tier | 3.8 / 6.1 / 8.4 / **7.4** | 3.8 / 6.1 / 6.4 / **9.4** |
+| rotate | 1 | the one control, nothing else to think about |
+| doors | 9 | routing; nothing can kill you yet |
+| spikes | 10 | the first way to die |
+| ice | 8 | almost no grip, so momentum has to be planned |
+| sticky | 8 | the only way to stop somewhere exact |
+| open edges | 7 | the room stops holding you in |
+| ceiling spikes | 2 | the flip up is no longer free |
 
-The two remaining "misfiles" are deliberate: the cheapest room introducing each
-element is pinned into the easy tier, because easy is also the teaching tier and
-the default drop. That pin is the only departure from a pure sort.
+Five of these came from `src/prototypes.gd` after playtesting: Skim, Well,
+Trapdoor, Overhead and Eyelet.
 
-What sorting could *not* fix: the execution axis still is not a curve (1, 1, 4, 2
-rooms per tier need a timing window), because only 8 of 40 rooms demand timing at
-all. That is a level-design gap, not an ordering one.
+A consequence worth knowing: this order does **not** segment cleanly. Publishing
+an arbitrary tenth drops a player into the middle of a mechanic they were never
+taught, so a segment should be cut at a block boundary if it is cut at all.
 
 ## Notes on the port
 

@@ -56,7 +56,7 @@ for (const level of SEGMENT) {
   // A real player deliberates between rotations, and the room clock is running
   // from their first rotation onward.
   const seconds = w.time + THINK;
-  const pts = levelScore(w.rotations, seconds);
+  const pts = levelScore(w.rotations, seconds, level.par);
   banked += pts;
   cleared++;
   rotationsTotal += w.rotations;
@@ -72,7 +72,7 @@ for (const level of SEGMENT) {
 const total = finalScore(banked, attempts);
 console.log('─'.repeat(58));
 console.log(`rooms cleared      ${cleared} / ${SEGMENT.length}`);
-console.log(`rotations          ${rotationsTotal}  (−${rotationsTotal * 5} pts)`);
+console.log(`rotations          ${rotationsTotal} used`);
 console.log(`banked             ${banked}`);
 console.log(`attempts left      ${attempts}  (+${attempts * 500} pts)`);
 console.log(`FINAL SCORE        ${total}`);

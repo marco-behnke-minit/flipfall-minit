@@ -73,15 +73,16 @@ const ATTEMPTS := 3
 const ATTEMPTS_MIN := 1
 const ATTEMPTS_MAX := 9
 
-# Rooms per difficulty tier. The room list is exactly TIERS.size() * TIER_SIZE
-# long, and src/levels.gd asserts it.
+# Kept for the level label's colour, which is the only thing that still reads
+# them. The rooms are no longer four blocks of ten: they are ordered as a
+# learning curve (see src/levels.gd), so a "tier" is just which quarter of the
+# run you are in.
 const TIERS: Array[String] = ["easy", "medium", "hard", "insane"]
-const TIER_SIZE := 10
-const LEVEL_COUNT := 40  # TIERS.size() * TIER_SIZE
+const LEVEL_COUNT := 45
 
 
-static func tier_of(index: int) -> String:
-	return TIERS[clampi(index / TIER_SIZE, 0, TIERS.size() - 1)]
+static func tier_of(index: int, total: int = LEVEL_COUNT) -> String:
+	return TIERS[clampi(index * TIERS.size() / maxi(1, total), 0, TIERS.size() - 1)]
 
 
 # ---------------------------------------------------------------------------
@@ -92,10 +93,11 @@ static func tier_of(index: int) -> String:
 const CONFIG := [
 	{"key": "attempts", "value_type": "number", "value": ATTEMPTS, "min": ATTEMPTS_MIN, "max": ATTEMPTS_MAX},
 	# start_level / end_level select the segment of the room list a drop plays.
-	# The default is the whole list; a drop can publish a single difficulty band
-	# instead by setting a tenth — 1-10 easy, 11-20 medium, 21-30 hard, 31-40
-	# insane — since src/levels.gd is sorted by measured difficulty. Locked
-	# against mods so a mod cannot swap the room set out from under a score.
+	# The default is the whole list. src/levels.gd is ordered as a learning curve
+	# rather than as four blocks of ten, so a segment should be cut at a block
+	# boundary if it is cut at all — an arbitrary tenth drops the player into the
+	# middle of a mechanic they were never taught. Locked against mods so a mod
+	# cannot swap the room set out from under a score.
 	{"key": "startLevel", "value_type": "number", "value": 1, "min": 1, "max": LEVEL_COUNT},
 	{"key": "endLevel", "value_type": "number", "value": LEVEL_COUNT, "min": 1, "max": LEVEL_COUNT},
 ]
@@ -109,10 +111,30 @@ static func config_spec(key: String) -> Dictionary:
 	return {}
 
 
+# ---------------------------------------------------------------------------
 # Scoring.
+#
+# Every room can be finished by "creeping" — alternating gravity walks the orb
+# along any surface a fraction of a cell at a time, with no timing at all. That
+# is deliberately left in: working ice out and mastering it is satisfying, and a
+# player who is stuck should always have a way home.
+#
+# So the score, not the pass/fail, is where difficulty lives. Creeping costs
+# twenty-odd extra rotations and half a minute, and the scoring is tuned so that
+# is a visible sacrifice rather than a rounding error.
+#
+# `par` is the committed route the solver found, which makes it the natural
+# benchmark: under par means you took the line, far over means you walked it.
+# ---------------------------------------------------------------------------
 const PTS_PER_LEVEL := 1000
 const PTS_PER_ATTEMPT := 500
-const PTS_PER_ROTATION := -5
+# Rotations are scored against par rather than counted flat, so beating the
+# solver's route pays and creeping to the exit does not.
+const PTS_PER_ROTATION_UNDER_PAR := 40   # earned per rotation saved
+const PTS_PER_ROTATION_OVER_PAR := 25    # charged per rotation wasted
+# Dying already costs an Attempt, worth 500 at the end. This makes it hurt now
+# rather than only in the final tally.
+const PTS_PER_DEATH := -150
 const TIME_BONUS_BASE := 200.0
 const TIME_BONUS_DECAY := 10.0  # points lost per second
 

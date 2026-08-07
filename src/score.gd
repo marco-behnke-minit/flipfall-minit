@@ -4,23 +4,42 @@ extends RefCounted
 ##
 ##   +1000  per room cleared
 ##   +500   per Attempt still in hand when the run ends
-##   -5     per gravity rotation (winning attempt only — a reset wipes the slate,
-##          the lost Attempt is the penalty)
 ##   +time  max(0, 200 - seconds * 10) per room, timed from the first rotation
+##   +40    per rotation UNDER par
+##   -25    per rotation OVER par
+##   -150   per death
+##
+## Rotations are scored against par instead of counted flat because every room
+## can be finished by creeping — walking the orb along a surface with alternating
+## flips, which needs no timing but spends twenty-odd extra rotations and half a
+## minute. That route is deliberately still available; this is what makes taking
+## it a visible sacrifice rather than a rounding error.
 
 
 static func time_bonus(seconds: float) -> int:
 	return int(max(0.0, round(Const.TIME_BONUS_BASE - seconds * Const.TIME_BONUS_DECAY)))
 
 
+## How the rotations used compare with par. Positive is a reward for beating the
+## solver's committed route, negative is the cost of wandering past it.
+static func rotation_score(rotations: int, par: int) -> int:
+	var saved := par - rotations
+	if saved >= 0:
+		return saved * Const.PTS_PER_ROTATION_UNDER_PAR
+	return saved * Const.PTS_PER_ROTATION_OVER_PAR   # saved is negative here
+
+
 ## Points banked for clearing one room.
-static func level_score(rotations: int, seconds: float) -> int:
-	return maxi(0, Const.PTS_PER_LEVEL + time_bonus(seconds) + rotations * Const.PTS_PER_ROTATION)
+static func level_score(rotations: int, seconds: float, par: int) -> int:
+	return maxi(0, Const.PTS_PER_LEVEL + time_bonus(seconds) + rotation_score(rotations, par))
 
 
-## Final total: everything banked, plus the unspent Attempts.
-static func final_score(banked_points: int, attempts_left: int) -> int:
-	return maxi(0, banked_points + maxi(0, attempts_left) * Const.PTS_PER_ATTEMPT)
+## Final total: everything banked, plus the unspent Attempts, less what the
+## deaths cost.
+static func final_score(banked_points: int, attempts_left: int, deaths: int = 0) -> int:
+	return maxi(0, banked_points
+		+ maxi(0, attempts_left) * Const.PTS_PER_ATTEMPT
+		+ maxi(0, deaths) * Const.PTS_PER_DEATH)
 
 
 static func empty_stats() -> Dictionary:

@@ -95,8 +95,7 @@ func _ready() -> void:
 	Levels.validate(_rooms, _rooms.size() == Const.LEVEL_COUNT)
 
 	_start_attempts = _config_number("attempts")
-	# The drop plays a segment of the room list: 1-10 easy, 11-20 medium,
-	# 21-30 hard, 31-40 insane. Locked against mods in meta.json.
+	# The drop plays a segment of the room list. Locked against mods in meta.json.
 	_start_level = mini(_rooms.size(), _config_number("startLevel")) - 1
 	_end_level = maxi(_start_level, mini(_rooms.size(), _config_number("endLevel")) - 1)
 	_segment_size = _end_level - _start_level + 1
@@ -115,7 +114,8 @@ func _ready() -> void:
 	for spec in Const.CONFIG:
 		if not parse_override(OS.get_cmdline_user_args(), String(spec["key"])).is_empty():
 			print("[flipfall] local config override: attempts=%d, rooms %d-%d (%s)"
-				% [_start_attempts, _start_level + 1, _end_level + 1, Const.tier_of(_start_level)])
+				% [_start_attempts, _start_level + 1, _end_level + 1,
+					Const.tier_of(_start_level, _rooms.size())])
 			break
 
 	_panel_attempts = _header.add_panel("Attempts", _start_attempts)
@@ -297,7 +297,7 @@ func _arm_level(index: int) -> void:
 func _push_level_label() -> void:
 	var level: Dictionary = _rooms[_level_index]
 	_label.set_level(_level_index - _start_level, _segment_size, String(level["name"]),
-		Const.tier_of(_level_index))
+		Const.tier_of(_level_index, _rooms.size()))
 
 
 # --- input ------------------------------------------------------------------
@@ -390,7 +390,7 @@ func _lose_attempt(reason: String) -> void:
 func _on_level_clear() -> void:
 	var level: Dictionary = _rooms[_level_index]
 	var bonus := Score.time_bonus(_world.time)
-	var gained := Score.level_score(_world.rotations, _world.time)
+	var gained := Score.level_score(_world.rotations, _world.time, int(level["par"]))
 
 	_levels_cleared += 1
 	Score.record_clear(_stats, level, _world.rotations, _world.time)
@@ -448,7 +448,8 @@ func _end_run() -> void:
 	# Music keeps playing under the host's result screen rather than cutting out.
 
 	# Any score still mid-flight lands immediately — the host is about to take over.
-	var total := Score.final_score(_score + _flying_points, _attempts)
+	var deaths: int = int(_stats["spike_deaths"]) + int(_stats["out_deaths"])
+	var total := Score.final_score(_score + _flying_points, _attempts, deaths)
 	_score = total
 	_header.set_value(_panel_score, total, true)
 

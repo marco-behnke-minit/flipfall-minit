@@ -26,9 +26,15 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { loadLevels, validateLevels, tierOf, writePar } from './lib/levels.mjs';
 import { solveRestOnly, solveTimed, play } from './reference/search.js';
+import { creepable } from './lib/creep.mjs';
 
-// A room with no rest-only route needs a timing window a human can hit. How wide
-// is a difficulty decision, so the bar scales with the tier.
+// Windows are reported, not gated on. Every room can be finished by creeping —
+// alternating gravity walks the orb along a surface with no timing at all — so a
+// narrow window never means a player is stranded, only that the committed line
+// is hard. tools/creep-check.mjs found this true of all 45 rooms, after three
+// design decisions had been made on the assumption that windows meant something.
+//
+// What still has to hold: the room is finishable. That is what is gated.
 const FORGIVING_MS = { easy: 250, medium: 200, hard: 120, insane: 60 };
 
 const args = process.argv.slice(2);
@@ -111,11 +117,13 @@ LEVELS.forEach((level, i) => {
   const res = verify(level);
   const { rest, fast } = res;
 
-  // Shippable if there is a rest-only route (no timing at all) or a timed route
-  // with a window a human can actually hit.
-  const tier = tierOf(i);
+  // Shippable if the room can be finished at all: a rest-only route, a timed
+  // route with a window a human can hit, or — failing both — the creep.
+  const tier = tierOf(i, LEVELS.length);
   const bestSlackMs = fast.ok && fast.best.slack !== null ? fast.best.slack * 1000 : null;
-  const forgiving = rest.ok || (fast.ok && (bestSlackMs === null || bestSlackMs >= FORGIVING_MS[tier] - 1));
+  const comfortable = rest.ok || (fast.ok && (bestSlackMs === null || bestSlackMs >= FORGIVING_MS[tier] - 1));
+  const walkable = comfortable || !!creepable(level);
+  const forgiving = walkable;
 
   let restCol;
   let suggestedPar;
@@ -149,6 +157,7 @@ LEVELS.forEach((level, i) => {
     parNote = `  ← set par: ${suggestedPar}`;
     parFixes.push({ name: level.name, from: level.par, to: suggestedPar });
   }
+  if (!comfortable && walkable) fastCol += '  [tight line, but walkable]';
   const mark = res.cached ? ' ' : '+'; // + = freshly searched this run
   console.log(
     `${forgiving ? '✓' : '✗'}${mark}${String(n).padStart(2)}. ${tier.padEnd(6)} ` +
@@ -190,6 +199,6 @@ if (fixPar && parFixes.length) {
 }
 
 if (failures) {
-  console.log(`\n${failures} room(s) are neither rest-only solvable nor forgiving. Fix before shipping.`);
+  console.log(`\n${failures} room(s) cannot be finished at all. Fix before shipping.`);
   process.exit(1);
 }

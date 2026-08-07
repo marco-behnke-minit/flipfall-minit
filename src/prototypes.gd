@@ -162,7 +162,7 @@ const ALL := [
 	# Overhead had already taught the move — "which is nice since you can apply
 	# something learned". A room is not hard or easy on its own; it is hard or
 	# easy given what the room before it taught.
-	{"name": "Overhead (narrow)", "par": 5, "map": [
+	{"name": "Eyelet", "par": 5, "map": [
 		"#############",
 		"#E..........#",
 		"#...........#",

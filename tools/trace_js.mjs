@@ -6,6 +6,9 @@
 // reproduces the simulation the rooms were proven solvable against.
 //
 //   node tools/trace_js.mjs > /tmp/trace-js.txt
+//
+// Fields are pipe-separated: room names contain spaces, and splitting on
+// whitespace silently shifted every column after the name.
 import { loadLevels } from './lib/levels.mjs';
 import { createWorld, stepWorld, rotate } from './reference/physics.js';
 import { SUBSTEP } from './reference/constants.js';
@@ -57,6 +60,6 @@ for (let i = 0; i < LEVELS.length; i++) {
       buttons || '-',
       impacts.length,
       impactSum.toFixed(6),
-    ].join(' ')
+    ].join('|')
   );
 }

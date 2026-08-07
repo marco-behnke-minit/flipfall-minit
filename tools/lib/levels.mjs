@@ -6,9 +6,10 @@ import { readFileSync, writeFileSync } from 'node:fs';
 
 export const GRID = 13;
 export const TIERS = ['easy', 'medium', 'hard', 'insane'];
-export const TIER_SIZE = 10;
-export const LEVEL_COUNT = TIERS.length * TIER_SIZE;
-export const tierOf = (index) => TIERS[Math.floor(index / TIER_SIZE)];
+export const TIER_SIZE = 10;   // legacy; rooms are a curve now, not four blocks
+export const LEVEL_COUNT = 45;
+export const tierOf = (index, total = LEVEL_COUNT) =>
+  TIERS[Math.min(TIERS.length - 1, Math.floor(index * TIERS.length / Math.max(1, total)))];
 
 const LEVELS_GD = new URL('../../src/levels.gd', import.meta.url);
 const ENTRY = /\{"name": "([^"]+)", "par": (\d+), "map": \[([\s\S]*?)\]\}/g;

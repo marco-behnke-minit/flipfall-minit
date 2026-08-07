@@ -92,7 +92,9 @@ export const configSpec = (key) => {
 };
 export const PTS_PER_LEVEL = 1000;
 export const PTS_PER_ATTEMPT = 500;
-export const PTS_PER_ROTATION = -5;
+export const PTS_PER_ROTATION_UNDER_PAR = 40;
+export const PTS_PER_ROTATION_OVER_PAR = 25;
+export const PTS_PER_DEATH = -150;
 export const TIME_BONUS_BASE = 200;
 export const TIME_BONUS_DECAY = 10; // points lost per second
 

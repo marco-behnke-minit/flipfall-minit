@@ -21,8 +21,8 @@ func _check(label: String, got, want) -> void:
 func _initialize() -> void:
 	var game := load("res://src/game.gd")
 	var attempts := Const.config_spec("attempts")        # default 3, 1..9
-	var start_level := Const.config_spec("startLevel")   # default 1, 1..40
-	var end_level := Const.config_spec("endLevel")       # default 40, 1..40
+	var start_level := Const.config_spec("startLevel")   # default 1, 1..45
+	var end_level := Const.config_spec("endLevel")       # default 45, 1..45
 
 	# The two cases the design names explicitly.
 	_check("attempts=99 clamps to the max", game.coerce_config("99", attempts), 9)
@@ -31,7 +31,7 @@ func _initialize() -> void:
 	# Absent key: the SDK facade hands back the empty default.
 	_check("attempts absent -> default", game.coerce_config("", attempts), 3)
 	# The default drop is the whole room list, not the first tier.
-	_check("endLevel absent -> all forty", game.coerce_config("", end_level), 40)
+	_check("endLevel absent -> the whole list", game.coerce_config("", end_level), Const.LEVEL_COUNT)
 
 	# parseInt semantics rather than to_int(): a leading integer wins, junk after
 	# it is ignored, and junk instead of it falls back to the default — never to
@@ -45,7 +45,7 @@ func _initialize() -> void:
 	# Clamping is two-sided, and a negative must not become the default.
 	_check("attempts=-5 clamps to the min", game.coerce_config("-5", attempts), 1)
 	_check("attempts=0 clamps to the min", game.coerce_config("0", attempts), 1)
-	_check("startLevel=999 clamps to 40", game.coerce_config("999", start_level), 40)
+	_check("startLevel=999 clamps to the last room", game.coerce_config("999", start_level), Const.LEVEL_COUNT)
 
 	# Command-line overrides, for running outside the Minit host.
 	var args := PackedStringArray(["--attempts=9", "--startLevel=31", "endLevel=40", "--other=1"])
