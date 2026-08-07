@@ -15,7 +15,7 @@
 // A room earns its place by failing to be either. Everything else is a candidate
 // for retirement, so the effort goes into new rooms instead of redecorating old
 // ones.
-import { solveRestOnly } from './reference/search.js';
+import { solveRestOnly, solveTimed } from './reference/search.js';
 import { GRID } from './reference/constants.js';
 import { loadLevels } from './lib/levels.mjs';
 
@@ -54,16 +54,32 @@ const rooms = LEVELS.map((level, i) => {
   const par = base.ok ? base.rotations : null;
 
   // Does removing each hazard change the answer?
+  //
+  // This used to compare rest-only rotation counts alone, which quietly passed
+  // every hazard in a room that has no rest-only route: par was null, the
+  // stripped solve failed too, and `!r.ok` marked it load-bearing regardless.
+  // Eight of the ten shipped rooms have no rest-only route, so the column was
+  // meaningless for exactly the rooms it was being used to judge — it rated
+  // Grip's sticky as mattering when swapping it for stone changes nothing at all.
+  //
+  // So the signature falls back to the timed route when there is no rest route,
+  // and compares rotations AND window width.
+  const signature = (lvl) => {
+    const r = solveRestOnly(lvl);
+    if (r.ok) return `rest:${r.rotations}`;
+    const t = solveTimed(lvl);
+    if (!t.ok) return 'unsolvable';
+    const slack = t.best.slack === null ? 'none' : Math.round(t.best.slack * 1000);
+    return `timed:${t.best.path.length}:${slack}`;
+  };
+  const baseSig = signature(level);
+
   let loadBearing = false;
   const carries = [];
   for (const [ch, replacement, label] of [['^', '.', 'spikes'], ['I', '#', 'ice'], ['T', '#', 'sticky']]) {
     if (!flat.includes(ch)) continue;
-    const r = solveRestOnly(strip(level, ch, replacement));
-    const changed = !r.ok || r.rotations !== par;
-    if (changed) { loadBearing = true; carries.push(label); }
+    if (signature(strip(level, ch, replacement)) !== baseSig) { loadBearing = true; carries.push(label); }
   }
-  // A room with no rest-only route at all is doing something the others are not.
-  if (par === null) loadBearing = true;
   // A room with no hazards is not decorated — judge it on its shape alone.
   const bare = !/[\^IT]/.test(flat);
   if (bare) loadBearing = true;
