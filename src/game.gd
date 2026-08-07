@@ -311,6 +311,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		_on_touch(event.position, event.pressed)
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		_on_touch(event.position, event.pressed)
+	elif event is InputEventKey and not event.echo:
+		_on_key(event)
+
+
+## Left and right arrows drive the two rotate buttons, which makes playtesting in
+## a browser far less fiddly than aiming at them. They press the on-screen button
+## too, so what the tester sees still matches what they did. Echo events are
+## ignored: holding a key must not spin gravity.
+func _on_key(event: InputEventKey) -> void:
+	match event.keycode:
+		KEY_LEFT:
+			_held_ccw = event.pressed
+			if event.pressed:
+				_do_rotate(1)
+		KEY_RIGHT:
+			_held_cw = event.pressed
+			if event.pressed:
+				_do_rotate(-1)
 
 
 func _on_touch(viewport_pos: Vector2, pressed: bool) -> void:

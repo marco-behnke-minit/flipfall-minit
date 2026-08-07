@@ -87,6 +87,10 @@ From the editor, put the same arguments after `--` in **Project Settings →
 Editor → Run → Main Run Args**. The game prints a line on startup when an
 override is active, so a test run cannot be mistaken for the shipped defaults.
 
+**Left and right arrow keys** drive the two rotate buttons, which makes testing
+in a browser much less fiddly than aiming at them. They press the on-screen
+button too, so what a tester sees still matches what they did.
+
 A web export has no user args, so all of this is inert in production and cannot
 shadow what the host sends. Overrides go through exactly the same coercion and
 clamping as the host's values, so they cannot reach out-of-range settings either.
