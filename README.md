@@ -308,3 +308,17 @@ reference engine invalidates all forty.
     src/ui/             header bar, feedback pops, flying rewards
     addons/minit/       the Minit Games SDK addon
     tools/              verification, capture and packaging
+
+## Licence
+
+MIT — see `LICENSE`.
+
+Bundled third-party material keeps its own terms, listed in
+`THIRD-PARTY-NOTICES.md`: the Minit Games SDK addon (MIT, Drop GmbH), and the
+Lato and Bowlby One SC fonts (SIL OFL).
+
+One caveat worth reading before making this repository public:
+`assets/audio/loop.mp3` arrived from the HTML5 project with **no recorded
+provenance**, so its licence is unknown and the MIT grant does not extend to it.
+The game degrades gracefully without it — `src/audio.gd` warns and plays on in
+silence, and every sound effect is synthesised at runtime.
