@@ -41,7 +41,9 @@ func _initialize() -> void:
 
 func _process(_delta: float) -> bool:
 	_frame += 1
-	var player := _game.get_node("Audio").get("_music") as AudioStreamPlayer
+	var player: AudioStreamPlayer = null
+	if _game != null:
+		player = _game.get_node("Audio").get("_music") as AudioStreamPlayer
 
 	if _frame == 5:
 		_check("the player picked the stream up", player != null and player.stream != null)
@@ -55,6 +57,15 @@ func _process(_delta: float) -> bool:
 
 	if _frame == 15:
 		_check("it starts on the first rotation", player != null and player.playing)
+		# Tear the scene down and let a frame pass before quitting: this runs
+		# inside package.sh, and a leaked-objects warning there reads like a real
+		# build problem. Freeing in the same frame as quit() is not enough — the
+		# tweens and players the run created are released on the next idle pass.
+		root.remove_child(_game)
+		_game.queue_free()
+		_game = null
+
+	if _frame == 20:
 		print("")
 		if _failures > 0:
 			print("%d FAILURE(S)" % _failures)
