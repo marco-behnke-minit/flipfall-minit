@@ -46,84 +46,11 @@ extends RefCounted
 ##     to visibly change what happens, not just widen a number.
 
 const ALL := [
-	# VALIDATED as hard. Build speed on the ice, then flip down EARLY: arrive
-	# slow and you drop into the hole, arrive fast and you skim over it into the
-	# spikes. Playtest: "hard because of the spikes behind the ice."
-	{"name": "Skim", "par": 4, "map": [
-		"#############",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#O..........#",
-		"#...........#",
-		"#IIIII.II^^^#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#.....E.....#",
-		"#############",
-	]},
-	# The exit is BELOW the start, down a one-cell shaft — the ladder shape every
-	# shipped room is built on, inverted.
-	#
-	# Two playtests shaped this. With no hazard at all it was "not hard, just
-	# annoying, you can't die". With spikes one cell past the shaft it was
-	# unplayable: seven attempts, seven impalings, never cleared — overshooting
-	# by a single cell was instant death with nothing to react to.
-	#
-	# So the shaft moved left and the spike moved to the far wall, leaving four
-	# cells of ice as runoff. Overshooting is still fatal, but there are now
-	# 0.4-0.7s between clearing the shaft and reaching the spike, against roughly
-	# 0.1s before — enough to see the mistake and flip out of it, which is the
-	# difference between hard and a wall.
-	{"name": "Well", "par": 5, "map": [
-		"#############",
-		"#O..........#",
-		"#IIIII.IIII^#",
-		"######.######",
-		"######.######",
-		"######.######",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#E..........#",
-		"#...........#",
-		"#############",
-	]},
-	# The button sits directly on its own door, so touching it removes the floor
-	# underneath, and the drop is the start of the problem rather than the win.
-	#
-	# The first version put a one-cell hole above a spike floor with the exit two
-	# cells right of it, and was correctly called impossible. Simulated, the orb
-	# only enters a one-cell hole below about 150px/s, and at that speed it lands
-	# straight down on the spikes — the solver's "solution" needed a 50ms entry
-	# followed by mid-air steering, which is not a thing a person can do.
-	#
-	# So the door is two cells, which the orb can carry speed through, and the
-	# spikes moved to the LEFT of the landing zone. Drifting left kills, drifting
-	# right merely misses. That took the forgiving window from 50ms to 325ms —
-	# the band Skim sits in, which played as properly hard.
-	{"name": "Trapdoor", "par": 2, "map": [
-		"#############",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#O..........#",
-		"#...........#",
-		"#...........#",
-		"#.....1.....#",
-		"#IIIIIaaIIII#",
-		"#...........#",
-		"#...........#",
-		"#^^^^^.E....#",
-		"#############",
-	]},
-	# The same room on stone, to make ice visibly load-bearing rather than a
-	# number in a report — the previous pair differed by 11x in measured window
-	# and read as identical in play. It now shows: ice needs one committed flip at
-	# 325ms, stone needs two at 125ms and two more rotations to get there.
+	# Rejected. The same room as the shipped Trapdoor but on stone instead of ice.
+	# Playtested as "nearly the exact same room", and the creep is why: alternating
+	# gravity walks the orb along either surface, so the floor material changes
+	# nothing a player can feel. Kept as the record of a distinction that measured
+	# 11x in window width and was invisible in play.
 	{"name": "Trapdoor (stone)", "par": 4, "map": [
 		"#############",
 		"#...........#",
@@ -137,44 +64,6 @@ const ALL := [
 		"#...........#",
 		"#...........#",
 		"#^^^^^.E....#",
-		"#############",
-	]},
-	# VALIDATED as insane. A spiked ceiling with a two-cell safe column, so the
-	# reflex flip-up at a wall is fatal and the climb has to be committed
-	# mid-flight. Playtest: "insane, not unfair — took approx 8 attempts."
-	{"name": "Overhead", "par": 5, "map": [
-		"#############",
-		"#E..........#",
-		"#...........#",
-		"#####aa######",
-		"#^^^^..^^^^^#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#O.........1#",
-		"#############",
-	]},
-	# VALIDATED, and the most interesting result. The same again with a one-cell
-	# column, which the solver scored at 0ms. Playtest: one attempt, because
-	# Overhead had already taught the move — "which is nice since you can apply
-	# something learned". A room is not hard or easy on its own; it is hard or
-	# easy given what the room before it taught.
-	{"name": "Eyelet", "par": 5, "map": [
-		"#############",
-		"#E..........#",
-		"#...........#",
-		"######a######",
-		"#^^^^^.^^^^^#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#O.........1#",
 		"#############",
 	]},
 ]
