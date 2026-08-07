@@ -72,11 +72,19 @@ const ALL := [
 		"#############",
 	]},
 	# The button sits directly on its own door, so touching it removes the floor
-	# underneath. Dropping through used to BE the win, which is why it played as
-	# a re-skin of Skim; now the drop is the start of the problem. You fall with
-	# whatever speed the ice gave you and have to carry enough of it rightward to
-	# clear the spikes below.
-	{"name": "Trapdoor", "par": 5, "map": [
+	# underneath, and the drop is the start of the problem rather than the win.
+	#
+	# The first version put a one-cell hole above a spike floor with the exit two
+	# cells right of it, and was correctly called impossible. Simulated, the orb
+	# only enters a one-cell hole below about 150px/s, and at that speed it lands
+	# straight down on the spikes — the solver's "solution" needed a 50ms entry
+	# followed by mid-air steering, which is not a thing a person can do.
+	#
+	# So the door is two cells, which the orb can carry speed through, and the
+	# spikes moved to the LEFT of the landing zone. Drifting left kills, drifting
+	# right merely misses. That took the forgiving window from 50ms to 325ms —
+	# the band Skim sits in, which played as properly hard.
+	{"name": "Trapdoor", "par": 2, "map": [
 		"#############",
 		"#...........#",
 		"#...........#",
@@ -85,17 +93,17 @@ const ALL := [
 		"#...........#",
 		"#...........#",
 		"#.....1.....#",
-		"#IIIIIaIIIII#",
+		"#IIIIIaaIIII#",
 		"#...........#",
 		"#...........#",
-		"#^^^^^^^E...#",
+		"#^^^^^.E....#",
 		"#############",
 	]},
-	# The same room on stone. Friction eats the speed, so the drop goes nearly
-	# straight down into the spikes. The point is to make ice visibly
-	# load-bearing rather than a number in a report — the previous pair differed
-	# by 11x in measured window and read as identical in play.
-	{"name": "Trapdoor (stone)", "par": 5, "map": [
+	# The same room on stone, to make ice visibly load-bearing rather than a
+	# number in a report — the previous pair differed by 11x in measured window
+	# and read as identical in play. It now shows: ice needs one committed flip at
+	# 325ms, stone needs two at 125ms and two more rotations to get there.
+	{"name": "Trapdoor (stone)", "par": 4, "map": [
 		"#############",
 		"#...........#",
 		"#...........#",
@@ -104,10 +112,10 @@ const ALL := [
 		"#...........#",
 		"#...........#",
 		"#.....1.....#",
-		"######a######",
+		"######aa#####",
 		"#...........#",
 		"#...........#",
-		"#^^^^^^^E...#",
+		"#^^^^^.E....#",
 		"#############",
 	]},
 	# VALIDATED as insane. A spiked ceiling with a two-cell safe column, so the
