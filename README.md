@@ -210,7 +210,7 @@ a visible sacrifice rather than the 21% it cost when rotations were a flat −5.
 
 ## Room order
 
-27 rooms, ordered as a **learning curve** rather than a difficulty ranking —
+10 rooms, ordered as a **learning curve** rather than a difficulty ranking —
 `tools/curve.mjs` produces the order and `src/levels.gd` carries it.
 
 A monotonic ramp is the wrong shape. Difficulty is not a property of a room, it
@@ -221,18 +221,22 @@ shape is a sawtooth — introduce a mechanic, ramp up the rooms using it, let
 mastery make them feel easy, then reset with something new. **Only the rise is
 authored; the fall happens in the player.**
 
-| block | rooms | |
-| --- | --- | --- |
-| rotate | 1 | the one control, nothing else to think about |
-| doors | 9 | routing; nothing can kill you yet |
-| spikes | 2 | the first way to die |
-| ice | 4 | almost no grip, so momentum has to be planned |
-| sticky | 8 | the only way to stop somewhere exact |
-| open edges | 1 | the room stops holding you in |
-| ceiling spikes | 2 | the flip up is no longer free |
+| # | room | block | window |
+| --- | --- | --- | --- |
+| 1 | Teeth | spikes | rest-only |
+| 2 | Trapdoor | ice | 325 ms |
+| 3 | Well | ice | 200 ms |
+| 4 | Skim | ice | 275 ms |
+| 5 | Skate | ice | rest-only |
+| 6 | Grip | sticky | 250 ms |
+| 7 | Anchor | sticky | 200 ms |
+| 8 | Hairline | sticky | 175 ms |
+| 9 | Overhead | ceiling | tight |
+| 10 | Eyelet | ceiling | tight |
 
-Five of these came from `src/prototypes.gd` after playtesting: Skim, Well,
-Trapdoor, Overhead and Eyelet.
+Nine of the ten require a timed flip; the shipped 40 had eight out of forty.
+Five came from `src/prototypes.gd` after playtesting: Trapdoor, Well, Skim,
+Overhead and Eyelet.
 
 ### Every room has to earn its place
 

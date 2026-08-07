@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "title": "Flipfall 🔄🔵",
   "controls": "- **Tap ↺ / ↻** to tip the room a quarter turn — down is always down, so the room turns instead\n- **Rotate mid-flight** to curve the orb's path and brake before spikes\n- **Tap Retry** to reset the room instantly — it costs one Attempt",
-  "logic": "- Guide the orb to the green exit through 27 handcrafted rooms — you never steer it directly, only gravity\n- **Buttons** stay pressed once hit and open their matching door for good\n- Spikes, and falling out of an open-sided room, cost an **Attempt**; run out and the run ends\n- Score rewards rooms cleared, Attempts left, fast clears and beating par — wandering past par and dying both cost",
-  "description": "## What's This? 🎮\n\nA momentum puzzle about the one thing you can control: **down**. Tap to tip the room a quarter turn and let the orb fall, roll and skid its way to the exit. Twenty-seven rooms, one run, about six minutes. 🔵\n\n## The Twist 🌀\n\nYou never touch the orb. Gravity stays pointing at the floor of your screen and the whole room tumbles around it, so falling always reads the way your eyes expect. Flip mid-flight and the orb arcs instead of turning corners — that's where the good solutions hide. ✨\n\n## Surfaces 🧊\n\n- **Stone** — the orb skids a few tiles before settling\n- **Ice** 🧊 — almost no grip; you'll cross the whole room before stopping\n- **Sticky** 🟣 — lands dead on the spot, the only way to stop somewhere precise\n\n## Scoring ⭐\n\n- **+1000** per room cleared\n- **+500** per Attempt still in hand at the end\n- **+200** time bonus per room, draining 10 a second\n- **+40** per rotation under par, **−25** per rotation over — elegant beats frantic\n- **−150** per death\n\n## Tips 💡\n\n- Read the whole room before your first tap — nothing moves until you do 👀\n- Spikes hurt from every side; there is no safe angle 🔺\n- Stuck? You can always inch the orb along by flipping back and forth — it will get you home, it just will not score 🐢\n- On ice, decide early. On sticky, you can afford to be late 🎯\n\n## Creator Corner 🎨\n\n- Hand-built rooms, ordered as a learning curve — each new element is introduced, pushed, then mastered — and every one machine-verified solvable 🛠️\n- Enjoy it? Leave a cheer and we'll build more gravity 🎉\n- Game Version: 1",
+  "logic": "- Guide the orb to the green exit through 10 handcrafted rooms — you never steer it directly, only gravity\n- **Buttons** stay pressed once hit and open their matching door for good\n- Spikes, and falling out of an open-sided room, cost an **Attempt**; run out and the run ends\n- Score rewards rooms cleared, Attempts left, fast clears and beating par — wandering past par and dying both cost",
+  "description": "## What's This? 🎮\n\nA momentum puzzle about the one thing you can control: **down**. Tap to tip the room a quarter turn and let the orb fall, roll and skid its way to the exit. Ten rooms, one run, a few minutes. 🔵\n\n## The Twist 🌀\n\nYou never touch the orb. Gravity stays pointing at the floor of your screen and the whole room tumbles around it, so falling always reads the way your eyes expect. Flip mid-flight and the orb arcs instead of turning corners — that's where the good solutions hide. ✨\n\n## Surfaces 🧊\n\n- **Stone** — the orb skids a few tiles before settling\n- **Ice** 🧊 — almost no grip; you'll cross the whole room before stopping\n- **Sticky** 🟣 — lands dead on the spot, the only way to stop somewhere precise\n\n## Scoring ⭐\n\n- **+1000** per room cleared\n- **+500** per Attempt still in hand at the end\n- **+200** time bonus per room, draining 10 a second\n- **+40** per rotation under par, **−25** per rotation over — elegant beats frantic\n- **−150** per death\n\n## Tips 💡\n\n- Read the whole room before your first tap — nothing moves until you do 👀\n- Spikes hurt from every side; there is no safe angle 🔺\n- Stuck? You can always inch the orb along by flipping back and forth — it will get you home, it just will not score 🐢\n- On ice, decide early. On sticky, you can afford to be late 🎯\n\n## Creator Corner 🎨\n\n- Hand-built rooms, ordered as a learning curve — each new element is introduced, pushed, then mastered — and every one machine-verified solvable 🛠️\n- Enjoy it? Leave a cheer and we'll build more gravity 🎉\n- Game Version: 1",
   "resultSorting": "highestScore",
   "config": [
     {
@@ -20,16 +20,16 @@
       "valueType": "number",
       "value": 1,
       "min": 1,
-      "max": 27,
+      "max": 10,
       "moddable": false,
       "description": "Which room the drop opens on. 1-10 easy, 11-20 medium, 21-30 hard, 31-40 insane."
     },
     {
       "key": "endLevel",
       "valueType": "number",
-      "value": 27,
+      "value": 10,
       "min": 1,
-      "max": 27,
+      "max": 10,
       "moddable": false,
       "description": "Last room of the drop. With startLevel this selects the difficulty segment."
     }

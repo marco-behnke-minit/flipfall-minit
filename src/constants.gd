@@ -78,7 +78,7 @@ const ATTEMPTS_MAX := 9
 # learning curve (see src/levels.gd), so a "tier" is just which quarter of the
 # run you are in.
 const TIERS: Array[String] = ["easy", "medium", "hard", "insane"]
-const LEVEL_COUNT := 27
+const LEVEL_COUNT := 10
 
 
 static func tier_of(index: int, total: int = LEVEL_COUNT) -> String:
