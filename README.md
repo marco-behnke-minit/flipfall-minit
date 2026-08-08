@@ -210,7 +210,7 @@ a visible sacrifice rather than the 21% it cost when rotations were a flat −5.
 
 ## Room order
 
-10 rooms, ordered as a **learning curve** rather than a difficulty ranking —
+11 rooms, ordered as a **learning curve** rather than a difficulty ranking —
 `tools/curve.mjs` produces the order and `src/levels.gd` carries it.
 
 A monotonic ramp is the wrong shape. Difficulty is not a property of a room, it
@@ -221,18 +221,29 @@ shape is a sawtooth — introduce a mechanic, ramp up the rooms using it, let
 mastery make them feel easy, then reset with something new. **Only the rise is
 authored; the fall happens in the player.**
 
-| # | room | block | window |
+| # | room | teaches | window |
 | --- | --- | --- | --- |
 | 1 | Teeth | spikes | rest-only |
 | 2 | Trapdoor | ice | 325 ms |
 | 3 | Well | ice | 200 ms |
 | 4 | Skim | ice | 275 ms |
 | 5 | Skate | ice | rest-only |
-| 6 | Grip | sticky | 250 ms |
-| 7 | Anchor | sticky | 200 ms |
-| 8 | Hairline | sticky | 175 ms |
-| 9 | Overhead | ceiling | tight |
-| 10 | Eyelet | ceiling | tight |
+| 6 | Pothole | tar | 375 ms |
+| 7 | Grip | tar | 825 ms |
+| 8 | Anchor | tar | 50 ms |
+| 9 | Slalom | lane geometry | 300 ms |
+| 10 | Overhead | ceiling spikes | 50 ms |
+| 11 | Eyelet | ceiling spikes | tight |
+
+Every room has a hazard that changes its solution when removed — `tools/triage.mjs`
+checks this by deleting each hazard and re-solving. None is rest-only solvable
+except Teeth and Skate, so nine of eleven require a timed flip.
+
+**Tar** (`T`) is the one tile with a rule of its own: it grips like stone, but
+holding contact for `STICKY_DEATH` kills, and the hold sheds at only half speed so
+creeping across it does not beat the clock. It earns a room only when the
+objective sits ON it — you can always fly past a surface gravity is not pressing
+you into, which is how three earlier tar rooms came to be pure decoration.
 
 Nine of the ten require a timed flip; the shipped 40 had eight out of forty.
 Five came from `src/prototypes.gd` after playtesting: Trapdoor, Well, Skim,

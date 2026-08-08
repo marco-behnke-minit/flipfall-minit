@@ -96,6 +96,54 @@ const ALL := [
 		"#IIIIIIIIIII#",
 		"#############",
 	]},
+	# The answer to "the purple traps are harmless": they are, and this is why.
+	#
+	# Gravity parallel to a surface never presses the orb into it, so flying past
+	# sticky costs nothing — the same reason ice underfoot changes nothing when you
+	# are airborne. Sticky only bites on the flip that drives you INTO it.
+	#
+	# So the room is a run, not a fall. Flip right and the orb accelerates freely
+	# down the corridor; the gap in the floor is too far to coast to, and at full
+	# speed the orb skims straight over it like a wheel over a pothole. The only way
+	# in is to flip down EARLY and bleed off exactly enough speed to arrive slow
+	# enough to drop. Too early and you settle in the tar; too late and the spikes
+	# at the end have you.
+	#
+	#   flip down after   375-670ms   295ms wide, 118 of 241 timings lethal
+	#
+	# NOTE: this room was built when sticky braked at k=30 and the mechanic WAS the
+	# braking. Tar now grips like stone, so what carries it is the hold rather than
+	# the friction — stopping short no longer parks you, it kills you. The window
+	# widened from 165ms to 295ms in the change, which makes it the gentlest of the
+	# three tar rooms rather than the harshest.
+	#
+	# NOTE ON "one is top and one is bottom": measured, and it does not hold. Only
+	# the face you flip into ever does anything — a sticky ceiling here gives the
+	# identical 180ms window as stone or ice. Lining both faces would be the same
+	# decorative purple, just relocated, so the ceiling is stone.
+	#
+	# Under the tar rule both failures now kill: stop short and you settle on the
+	# sticky and are held until it takes you, overshoot and the spikes do. The
+	# spawn tile is stone on purpose — sticky there killed the player for thinking.
+	#
+	# It also ends the creep here. Walking the orb along the sticky means resting
+	# on it, and resting on it is fatal, so the cheap route is simply gone.
+	{"name": "Pothole", "par": 3, "map": [
+		"#############",
+		"#############",
+		"#O........^^#",
+		"##TT....TTTT#",
+		"####....#####",
+		"####....#####",
+		"####....#####",
+		"####...E#####",
+		"#############",
+		"#############",
+		"#############",
+		"#############",
+		"#############",
+	]},
+
 	# Rebuilt. The old Grip put its tar in the bottom floor at cols 5-7 and then
 	# routed you up and away from it — playtested as "no use of that tile, you take
 	# a different path to solve anyways", and the counterfactual agreed: swapping it
