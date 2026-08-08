@@ -96,21 +96,6 @@ const ALL := [
 		"#IIIIIIIIIII#",
 		"#############",
 	]},
-	{"name": "Anchor", "par": 4, "map": [
-		"#############",
-		"#E..........#",
-		"#...........#",
-		"###aaaaa#####",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#O.........1#",
-		"#####TTT#####",
-		"#############",
-	]},
 	# Rebuilt. The old Grip put its tar in the bottom floor at cols 5-7 and then
 	# routed you up and away from it — playtested as "no use of that tile, you take
 	# a different path to solve anyways", and the counterfactual agreed: swapping it
@@ -134,6 +119,32 @@ const ALL := [
 		"#############",
 		"#############",
 		"#############",
+		"#############",
+		"#############",
+	]},
+	# Rebuilt, for the reason a screenshot made obvious: the old Anchor put tar in
+	# the floor and then let you fly over it. Gravity along the direction of travel
+	# never presses the orb into anything, so the winning line passed the tar
+	# tangentially — 0ms of contact, closest approach exactly one orb radius — and
+	# "there is no way the trap is a danger to you" was simply correct.
+	#
+	# The rule that follows: you can fly past any surface, so tar only threatens
+	# when the OBJECTIVE sits on it. Here the button is one row below the spawn
+	# ledge, so flying straight across cannot reach it. The only way to press it is
+	# to land on the tar, and then you have 250ms to leave — dawdle 300ms and it
+	# takes you. Swapped for stone the room solves at a 75ms window instead of 50ms.
+	{"name": "Anchor", "par": 5, "map": [
+		"#############",
+		"#E..........#",
+		"#...........#",
+		"###aaaaa#####",
+		"#...........#",
+		"#...........#",
+		"#...........#",
+		"#...........#",
+		"#O..........#",
+		"##.........1#",
+		"##TTTTTTTTTT#",
 		"#############",
 		"#############",
 	]},
