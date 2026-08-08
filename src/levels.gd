@@ -96,6 +96,21 @@ const ALL := [
 		"#IIIIIIIIIII#",
 		"#############",
 	]},
+	{"name": "Anchor", "par": 4, "map": [
+		"#############",
+		"#E..........#",
+		"#...........#",
+		"###aaaaa#####",
+		"#...........#",
+		"#...........#",
+		"#...........#",
+		"#...........#",
+		"#...........#",
+		"#...........#",
+		"#O.........1#",
+		"#####TTT#####",
+		"#############",
+	]},
 	# Rebuilt. The old Grip put its tar in the bottom floor at cols 5-7 and then
 	# routed you up and away from it — playtested as "no use of that tile, you take
 	# a different path to solve anyways", and the counterfactual agreed: swapping it
@@ -122,34 +137,33 @@ const ALL := [
 		"#############",
 		"#############",
 	]},
-	{"name": "Anchor", "par": 4, "map": [
+	# Promoted from src/prototypes.gd, where it playtested as "amazing". It replaces
+	# Hairline, whose single sticky cell and ice floor both failed the counterfactual
+	# — the room solved identically with either swapped for stone.
+	#
+	# Three lanes, and the outer two are sealed alternately, so both routes exist:
+	# ride a wall and switch before each block, or hold the middle channel and touch
+	# nothing at all. The middle is a 16.8px band — the entire geometric slack of a
+	# 44px orb in a 60px channel.
+	#
+	# The blocks are stone on purpose. Built from sticky the room solves in the same
+	# 4 rotations at the same 300ms window, because you avoid them and so never
+	# slide on them; the material of a block you dodge cannot matter. A spike leads
+	# each block so riding into a sealed lane kills rather than parks you, and that
+	# is what removed the rest-only route.
+	{"name": "Slalom", "par": 4, "map": [
 		"#############",
-		"#E..........#",
-		"#...........#",
-		"###aaaaa#####",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#O.........1#",
-		"#####TTT#####",
 		"#############",
-	]},
-	{"name": "Hairline", "par": 5, "map": [
 		"#############",
-		"#E..........#",
-		"#...........#",
-		"######a######",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#...........#",
-		"#O.........1#",
-		"#IIIIITIIIII#",
+		"#############",
+		"#############",
+		"#..^##......#",
+		"#O.........E#",
+		"#.....^##...#",
+		"#############",
+		"#############",
+		"#############",
+		"#############",
 		"#############",
 	]},
 	{"name": "Overhead", "par": 5, "map": [

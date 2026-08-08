@@ -44,7 +44,7 @@ var buttons: Dictionary = {}    # set of pressed button chars
 var doors_open: Dictionary = {} # set of opened door chars
 var status: String = "playing"  # "playing" | "clear" | "dead"
 var cause: String = ""          # "spike" | "out" | "stuck"
-var sticky_time: float = 0.0    # unbroken seconds touching sticky; STICKY_DEATH is fatal
+var sticky_time: float = 0.0    # seconds held by tar; STICKY_DEATH is fatal
 var contact: String = ""        # material kind touched this step, for sfx / rendering
 var resting: bool = false
 var events: Array[Dictionary] = []  # drained by the caller each frame
@@ -273,7 +273,13 @@ func _substep(dt: float) -> void:
 		vy *= f
 
 	contact = contact_kind
-	sticky_time = sticky_time + dt if contact_kind == "sticky" else 0.0
+	# The hold sheds slower than it builds, so anything that touches tar often
+	# enough still accumulates — a creep cannot out-wait it by lengthening its
+	# half-period, which a fixed grace period allowed.
+	if contact_kind == "sticky":
+		sticky_time += dt
+	else:
+		sticky_time = maxf(0.0, sticky_time - dt * Const.STICKY_SHED)
 	resting = touched and hypot(vx, vy) < Const.REST_SPEED
 	if hardest > 150.0:
 		events.append({"type": "impact", "speed": hardest, "kind": contact_kind})

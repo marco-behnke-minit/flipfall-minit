@@ -69,6 +69,14 @@ const SUBSTEP := 1.0 / 240.0
 ## so escape always costs exactly one rotation. The tile reads as a hazard, so it
 ## is made one: brush it and live, settle on it and die.
 const STICKY_DEATH := 0.25
+## How fast the tar's hold bleeds off once the orb is clear, as a multiple of real
+## time. It must be SLOWER than the hold builds, or the tar is beaten by waiting.
+## A fixed grace period is not enough: the hold reset on any break longer than the
+## grace, and a creep just lengthens its half-period until it fits. Shedding at
+## half speed means anything touching tar more than a third of the time still
+## accumulates, whatever rhythm it uses. A playtester crossed a tar floor in 24
+## rotations without ever being held.
+const STICKY_SHED := 0.5
 
 # The room tumbles to keep gravity pointing screen-down.
 const TUMBLE_SECONDS := 0.24

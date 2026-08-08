@@ -4,7 +4,7 @@
 //
 // Coordinates here are playfield-local: (0,0) .. (PF_SIZE, PF_SIZE).
 // ---------------------------------------------------------------------------
-import { CELL, GRID, ORB_R, GRAVITY, MAX_SPEED, REST_SPEED, STICKY_DEATH } from './constants.js';
+import { CELL, GRID, ORB_R, GRAVITY, MAX_SPEED, REST_SPEED, STICKY_DEATH, STICKY_SHED } from './constants.js';
 
 // Gravity states, in clockwise order: dir=+1 steps clockwise through them
 // (Down → Left → Up → Right). Note that the ↺ *button* sends dir=+1, because
@@ -94,7 +94,7 @@ export function createWorld(level) {
     doorsOpen: new Set(),
     status: 'playing', // 'playing' | 'clear' | 'dead'
     cause: null, // 'spike' | 'out' | 'stuck'
-    stickyTime: 0, // unbroken seconds touching sticky; STICKY_DEATH is fatal
+    stickyTime: 0, // seconds held by tar; STICKY_DEATH is fatal
     contact: null, // material kind touched this step, for sfx / rendering
     resting: false,
     events: [], // drained by the caller each frame
@@ -214,7 +214,11 @@ function substep(w, dt) {
   }
 
   w.contact = contactKind;
-  w.stickyTime = contactKind === 'sticky' ? w.stickyTime + dt : 0;
+  // The hold sheds slower than it builds, so anything that touches tar often
+  // enough still accumulates — a creep cannot out-wait it by lengthening its
+  // half-period, which a fixed grace period allowed.
+  if (contactKind === 'sticky') w.stickyTime += dt;
+  else w.stickyTime = Math.max(0, w.stickyTime - dt * STICKY_SHED);
   w.resting = touched && Math.hypot(o.vx, o.vy) < REST_SPEED;
   if (hardest > 150) w.events.push({ type: 'impact', speed: hardest, kind: contactKind });
 

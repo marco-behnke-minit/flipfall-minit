@@ -44,6 +44,14 @@ export const SUBSTEP = 1 / 240;
 // so escape always costs exactly one rotation. The tile reads as a hazard, so it
 // is made one: brush it and live, settle on it and die.
 export const STICKY_DEATH = 0.25;
+// How fast the tar's hold bleeds off once the orb is clear, as a multiple of real
+// time. It must be SLOWER than the hold builds, or the tar is beaten by waiting.
+// A fixed grace period is not enough: the hold reset on any break longer than the
+// grace, and a creep just lengthens its half-period until it fits. Shedding at
+// half speed means anything touching tar more than a third of the time still
+// accumulates, whatever rhythm it uses. A playtester crossed a tar floor in 24
+// rotations without ever being held.
+export const STICKY_SHED = 0.5;
 
 // Run rules.
 export const ATTEMPTS = 3;
