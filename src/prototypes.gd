@@ -46,52 +46,6 @@ extends RefCounted
 ##     to visibly change what happens, not just widen a number.
 
 const ALL := [
-	# The slalom, and the room that taught me sticky cannot do this job.
-	#
-	# Sticky is SOLID — a block, not a coating — so a patch in a lane seals it
-	# rather than slowing whatever passes. That is what makes three lanes work
-	# where two cannot: at two lanes a patch leaves a 60px gap for a 44px orb and
-	# the route is forced, with no middle line to be skilled about. At three:
-	#
-	#   SAFE      ride a wall, and switch lanes before each block seals yours.
-	#   SKILLED   hold the middle channel and touch nothing. A 16.8px band on row
-	#             6.5 — the whole geometric slack of a 44px orb in a 60px channel.
-	#
-	# The blocks are STONE, because purple here would be a lie. Built with sticky
-	# the room solves in 4 rotations at a 300ms window; built with stone, the same
-	# 4 rotations at the same 300ms. You avoid the blocks, so you never slide on
-	# them, so their material never acts. Moving the sticky onto the ridden walls
-	# instead changes nothing either — sticky, stone and ice all give 4/300ms.
-	#
-	# Sticky only earns a room when the route is FORCED to slide along it with
-	# gravity pressing in. That is a narrow condition, and Pothole below is the
-	# shape that meets it.
-	#
-	# Reaching the middle band is the hard part, not holding it. Gravity along the
-	# corridor does not cancel vertical speed, so a level run needs vy = 0 at the
-	# moment of the flip: rise, arrest the rise, turn at the apex. That is the
-	# two-flips-in-the-air control, with the corridor as the thing it is FOR.
-	# A spike leads each patch, so riding a lane into a sealed section impales you
-	# rather than merely parking you against it — the playtest note that a room you
-	# cannot lose in is "not hard, just annoying". The exit sits at the far end of
-	# the middle lane, which both routes can reach: the middle line arrives head on,
-	# and a wall rider drops through it on the way past.
-	{"name": "Slalom", "par": 3, "map": [
-		"#############",
-		"#############",
-		"#############",
-		"#############",
-		"#############",
-		"#..^##......#",
-		"#O.........E#",
-		"#.....^##...#",
-		"#############",
-		"#############",
-		"#############",
-		"#############",
-		"#############",
-	]},
-
 	# The answer to "the purple traps are harmless": they are, and this is why.
 	#
 	# Gravity parallel to a surface never presses the orb into it, so flying past
@@ -99,17 +53,19 @@ const ALL := [
 	# are airborne. Sticky only bites on the flip that drives you INTO it.
 	#
 	# So the room is a run, not a fall. Flip right and the orb accelerates freely
-	# down a corridor lined with sticky; the gap in the floor is too far to coast
-	# to, and at full speed the orb skims straight over it like a wheel over a
-	# pothole. The only way in is to flip down EARLY and let the sticky bleed off
-	# exactly enough speed to arrive slow enough to drop. Too early and it stops
-	# short; too late and the spikes at the end have you.
+	# down the corridor; the gap in the floor is too far to coast to, and at full
+	# speed the orb skims straight over it like a wheel over a pothole. The only way
+	# in is to flip down EARLY and bleed off exactly enough speed to arrive slow
+	# enough to drop. Too early and you settle in the tar; too late and the spikes
+	# at the end have you.
 	#
-	#   flip down after   500-680ms   180ms wide, and 25 of 281 timings are lethal
+	#   flip down after   375-670ms   295ms wide, 118 of 241 timings lethal
 	#
-	# Sticky is load-bearing here, and it is the hardest of the three materials
-	# precisely because it brakes hardest — swapping the floor to stone widens the
-	# window to 270ms, ice to 505ms.
+	# NOTE: this room was built when sticky braked at k=30 and the mechanic WAS the
+	# braking. Tar now grips like stone, so what carries it is the hold rather than
+	# the friction — stopping short no longer parks you, it kills you. The window
+	# widened from 165ms to 295ms in the change, which makes it the gentlest of the
+	# three tar rooms rather than the harshest.
 	#
 	# NOTE ON "one is top and one is bottom": measured, and it does not hold. Only
 	# the face you flip into ever does anything — a sticky ceiling here gives the
