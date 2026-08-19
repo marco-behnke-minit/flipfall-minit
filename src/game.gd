@@ -310,7 +310,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		_on_touch(event.position, event.pressed)
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		_on_touch(event.position, event.pressed)
+		# On a touch device the engine also synthesises a left click for every
+		# tap (input_devices/pointing/emulate_mouse_from_touch, on by default),
+		# so taking both would rotate twice and turn gravity 180° per press.
+		# Emulated events carry device -1; only a real mouse gets through here.
+		if event.device != InputEvent.DEVICE_ID_EMULATION:
+			_on_touch(event.position, event.pressed)
 	elif event is InputEventKey and not event.echo:
 		_on_key(event)
 

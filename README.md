@@ -22,6 +22,7 @@ node tools/compare-trace.mjs                     # src/sim.gd == the reference
 godot --headless --script res://tools/test_score.gd    # scoring + flavor text
 godot --headless --script res://tools/test_config.gd  # config coercion + clamping
 godot --headless --script res://tools/test_music.gd   # the music is actually wired up
+godot --script res://tools/test_touch.gd --resolution 960x1480 # one tap = one quarter turn
 node tools/check-meta.mjs                        # meta.json: schema + semantic
 node tools/test-schema.mjs                       # the schema validator itself
 node tools/curve.mjs                             # the learning-curve order
