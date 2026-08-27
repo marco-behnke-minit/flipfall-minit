@@ -147,6 +147,18 @@ Support OFF** (a threaded build needs `SharedArrayBuffer`, which requires
 cross-origin-isolation headers the host iframe does not guarantee), **PWA OFF**,
 and **Canvas Resize Policy: Adaptive**.
 
+`web/shell.html` is Godot's stock 4.7.1 web shell (`godot.html`, straight out of
+`web_nothreads_release.zip`) plus one added block, and the preset points at it
+via `html/custom_html_shell`. The block retries a failed
+`AudioWorklet.addModule()` through `fetch()` + a `blob:` URL, because inside the
+Minit app the game is served from a custom URL scheme that a worklet module
+fetch cannot reach — `addModule()` rejects, Godot's audio driver never connects
+its output node, and the game plays perfectly with no sound at all. Nothing
+shows in gameplay; the only trace is a console `Failed to create
+PositionWorklet`. Everything else in the file is stock, so on a Godot upgrade
+re-extract `godot.html` from the new templates and re-apply the block rather
+than carrying this copy forward.
+
 ## Layout
 
 The original is authored against a fixed 960×1480 design surface and cover-scales
